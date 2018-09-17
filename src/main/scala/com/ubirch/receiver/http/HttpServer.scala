@@ -1,44 +1,21 @@
 package com.ubirch.receiver.http
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpEntity
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import akka.stream.ActorMaterializer
+import akka.http.scaladsl.server.{HttpApp, Route}
 
-import scala.concurrent.ExecutionContextExecutor
-import scala.io.StdIn
-
-object HttpServer {
+class HttpServer extends HttpApp {
 
 
-  def main(args: Array[String]) {
+  override def routes: Route =
+    path("") {
+      post {
+        entity(as[String]) { input =>
+          complete(HttpEntity("hello world"))
+        }
+      } ~
+        get {
+          complete(HttpEntity("hello world"))
+        }
+    }
 
-    implicit val system: ActorSystem = ActorSystem()
-    implicit val materializer: ActorMaterializer = ActorMaterializer()
-    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
-
-    val route: Route =
-      path("") {
-        post {
-          entity(as[String]) { input =>
-            system.log.info(s"received $input")
-            complete(HttpEntity("hello world"))
-          }
-        } ~
-          get {
-            complete(HttpEntity("hello world"))
-          }
-      }
-
-
-    val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
-
-    println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
-    StdIn.readLine()
-    bindingFuture
-      .flatMap(_.unbind())
-      .onComplete(_ => system.terminate())
-  }
 }
