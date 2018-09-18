@@ -8,7 +8,7 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
-import com.ubirch.receiver.Actors.{Receiver, RecordDispatcher}
+import com.ubirch.receiver.Actors.{RequestDispatcher, ResponseDispatcher}
 import com.ubirch.receiver.kafka.{KafkaListener, KafkaPublisher}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -27,17 +27,17 @@ package object receiver {
   private val kafkaUrl: String = conf.getString("kafka.url")
   val publisher = new KafkaPublisher(kafkaUrl, conf.getString("kafka.topic.incoming"))
 
-  private val rd: actor.ActorRef = system.actorOf(Props[RecordDispatcher], "recordDispatcher")
-  val listener = new KafkaListener(kafkaUrl, conf.getString("kafka.topic.outgoing"), rd)
+  private val responseDispatcher: actor.ActorRef = system.actorOf(Props[ResponseDispatcher], "recordDispatcher")
+  val listener = new KafkaListener(kafkaUrl, conf.getString("kafka.topic.outgoing"), responseDispatcher)
   listener.startPolling()
 
 
   def publish(requestData: RequestData): Future[String] = {
     implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS)
 
-    val rev = system.actorOf(Props[Receiver], requestData.requestId)
+    val dispatcher = system.actorOf(Props[RequestDispatcher], requestData.requestId)
 
-    rev ? requestData map (_.asInstanceOf[String])
+    dispatcher ? requestData map (_.asInstanceOf[String])
   }
 
 
