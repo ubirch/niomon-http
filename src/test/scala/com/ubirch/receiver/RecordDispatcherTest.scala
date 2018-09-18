@@ -17,10 +17,10 @@ class RecordDispatcherTest extends TestKit(ActorSystem("RecordDispatcherTest")) 
     val recordDispatcher = system.actorOf(Props(classOf[RecordDispatcher]))
 
     // when
-    recordDispatcher ! KV("requestId", "value")
+    recordDispatcher ! ResponseData("requestId", "value".getBytes, Map())
 
     // then
-    receiver.expectMsg(KV("requestId", "value"))
+    receiver.expectMsgClass(classOf[ResponseData])
   }
 
 

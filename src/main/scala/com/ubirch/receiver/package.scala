@@ -15,9 +15,8 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 
 package object receiver {
 
-  final case class SomeOutput(payload: String)
-
-  final case class KV(key: String, value: String)
+  final case class RequestData(requestId:String, value: Array[Byte], headers:Map[String, String])
+  final case class ResponseData(requestId:String, value: Array[Byte], headers:Map[String, String])
 
   val conf: Config = ConfigFactory.load
   implicit val system: ActorSystem = ActorSystem("http-receiver")
@@ -33,12 +32,12 @@ package object receiver {
   listener.startPolling()
 
 
-  def publish(reqestId: String, someInput: String): Future[String] = {
+  def publish(requestData: RequestData): Future[String] = {
     implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS)
 
-    val rev = system.actorOf(Props[Receiver], reqestId)
+    val rev = system.actorOf(Props[Receiver], requestData.requestId)
 
-    rev ? KV(reqestId, someInput) map (_.asInstanceOf[String])
+    rev ? requestData map (_.asInstanceOf[String])
   }
 
 
