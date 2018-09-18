@@ -11,7 +11,7 @@ object Actors {
   import akka.event.Logging
 
 
-  class RecordDispatcher extends Actor {
+  class ResponseDispatcher extends Actor {
     val log = Logging(context.system, this)
 
     override def receive: Receive = {
@@ -34,7 +34,7 @@ object Actors {
   }
 
 
-  class Receiver extends Actor {
+  class RequestDispatcher extends Actor {
     import context._
     val log = Logging(context.system, this)
 

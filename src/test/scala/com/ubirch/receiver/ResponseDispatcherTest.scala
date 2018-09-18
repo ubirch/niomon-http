@@ -2,11 +2,11 @@ package com.ubirch.receiver
 
 import akka.actor.{ActorSystem, Props}
 import akka.testkit._
-import com.ubirch.receiver.Actors.RecordDispatcher
+import com.ubirch.receiver.Actors.ResponseDispatcher
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
 
-class RecordDispatcherTest extends TestKit(ActorSystem("RecordDispatcherTest")) with FlatSpecLike with Matchers with BeforeAndAfterAll {
+class ResponseDispatcherTest extends TestKit(ActorSystem("RecordDispatcherTest")) with FlatSpecLike with Matchers with BeforeAndAfterAll {
 
 
   "RecordDispatcher" must "send to Receiver named by requestId" in {
@@ -14,13 +14,13 @@ class RecordDispatcherTest extends TestKit(ActorSystem("RecordDispatcherTest")) 
     val receiver = TestProbe()
     system.actorOf(Props(classOf[Forwarder], receiver.ref), "requestId")
 
-    val recordDispatcher = system.actorOf(Props(classOf[RecordDispatcher]))
+    val responseDispatcher = system.actorOf(Props(classOf[ResponseDispatcher]))
 
     // when
-    recordDispatcher ! ResponseData("requestId", "value".getBytes, Map())
+    responseDispatcher ! ResponseData("requestId", "value".getBytes, Map())
 
     // then
-    receiver.expectMsgClass(classOf[ResponseData])
+    receiver.expectMsgClass(classOf[ResponseData]).requestId should equal("requestId")
   }
 
 
