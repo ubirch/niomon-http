@@ -3,7 +3,7 @@ package com.ubirch.receiver.http
 import java.util.UUID
 
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.ubirch.receiver._
@@ -16,18 +16,18 @@ class HttpServer {
   def serveHttp() {
     val route: Route =
       path("") {
-        post {
-          entity(as[String]) { input =>
-            val published = publish(UUID.randomUUID().toString, input)
-            onComplete(published) { output =>
-              complete(output)
-            }
+        extractRequest {
+          req =>
+            entity(as[Array[Byte]]) {
+              input =>
+                val published = publish(RequestData(UUID.randomUUID().toString, input, getHeaders(req)))
+                onComplete(published) {
+                  output =>
+                    complete(output)
+                }
 
-          }
-        } ~
-          get {
-            complete(HttpEntity("hello world"))
-          }
+            }
+        }
       }
 
     val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
@@ -40,4 +40,10 @@ class HttpServer {
       .onComplete(_ => system.terminate())
   }
 
+  private def getHeaders(req: HttpRequest) = {
+    // ToDo BjB 18.09.18 : what else do we need here?
+    val contentType = Map("Content-Type" -> req.entity.contentType.mediaType.toString())
+
+    contentType
+  }
 }

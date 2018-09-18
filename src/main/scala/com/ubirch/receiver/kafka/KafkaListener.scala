@@ -5,10 +5,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import akka.actor.ActorRef
 import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.KafkaConsumer.Conf
-import com.ubirch.receiver.KV
-import org.apache.kafka.clients.consumer.{ConsumerRecords, OffsetResetStrategy}
+import com.ubirch.receiver.ResponseData
+import org.apache.kafka.clients.consumer.{ConsumerRecord, ConsumerRecords, OffsetResetStrategy}
 import org.apache.kafka.common.errors.WakeupException
-import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.{BytesDeserializer, StringDeserializer}
+import org.apache.kafka.common.utils.Bytes
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
@@ -22,11 +23,10 @@ class KafkaListener(kafkaUrl: String,
 
   val consumer = KafkaConsumer(
     Conf(new StringDeserializer(),
-      new StringDeserializer(),
-      bootstrapServers = kafkaUrl,
-      groupId = s"groupie",
-
-      autoOffsetReset = OffsetResetStrategy.EARLIEST)
+         new BytesDeserializer(),
+         bootstrapServers = kafkaUrl,
+         groupId = "http-receiver",
+         autoOffsetReset = OffsetResetStrategy.EARLIEST)
   )
 
   def run() {
@@ -58,20 +58,24 @@ class KafkaListener(kafkaUrl: String,
     this
   }
 
-  def pollRecords: Try[ConsumerRecords[String, String]] = {
+  def pollRecords: Try[ConsumerRecords[String, Bytes]] = {
     Try(consumer.poll(10))
   }
 
-  private def deliver(rcds: ConsumerRecords[String, String]): Unit = {
+  private def deliver(rcds: ConsumerRecords[String, Bytes]): Unit = {
     rcds.iterator().forEachRemaining(record => {
-      dispatcher ! KV(record.key(), record.value())
+      dispatcher ! ResponseData(record.key(), record.value().get(), extractHeaders(record))
     })
+  }
+
+  private def extractHeaders(record: ConsumerRecord[String, Bytes]) = {
+    record.headers().asScala.map(h => h.key() -> new String(h.value())).toMap
   }
 
   private def handleError(ex: Throwable): Unit = {
     ex match {
       case e: WakeupException => if (running.get()) consumer.close()
-      case e: Exception => ??? // ToDo BjB 17.09.18 : errorhandling
+      case e: Exception => // ToDo BjB 17.09.18 : errorhandling
     }
   }
 }

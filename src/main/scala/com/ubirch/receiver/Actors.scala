@@ -15,16 +15,16 @@ object Actors {
     val log = Logging(context.system, this)
 
     override def receive: Receive = {
-      case KV(key, value) =>
-        val path = s"user/$key"
+      case resp:ResponseData =>
+        val path = s"user/${resp.requestId}"
 
         val t0 = System.currentTimeMillis()
         val target = context.system.actorSelection(path)
 
         target.resolveOne(FiniteDuration(10, TimeUnit.MILLISECONDS))
           .onComplete {
-            case Success(ref) => ref ! KV(key, value)
-            case Failure(f) => log.warning(s"could not resolve actor to handle response for requestId [$key]", f)
+            case Success(ref) => ref ! resp
+            case Failure(f) => log.warning(s"could not resolve actor to handle response for requestId [${resp.requestId}]", f)
           }
         val t1 = System.currentTimeMillis()
 
@@ -35,24 +35,23 @@ object Actors {
 
 
   class Receiver extends Actor {
-    val log = Logging(context.system, this)
-
     import context._
+    val log = Logging(context.system, this)
 
     def receive: PartialFunction[Any, Unit] = {
 
-      case KV(k, v) =>
+      case RequestData(k, v, m) =>
         log.debug(s"received input $v")
-        publisher.send(key = k, value = v)
+        publisher.send(key = k, value = v, headers = m)
         become(outgoing(sender()))
 
     }
 
     private def outgoing(returnTo: ActorRef): Receive = {
 
-      case KV(_, v) =>
-        log.debug(s"received output $v")
-        returnTo ! s"from kafka with love: $v"
+      case ResponseData(_, v, m) =>
+        log.debug(s"received output [$v]")
+        returnTo ! s"from kafka with love: [${v.mkString}] which is [${new String(v)}], with headers: ${m.mkString}"
         context.stop(self)
     }
   }
