@@ -3,6 +3,7 @@ package com.ubirch.receiver
 
 import java.util.concurrent.{LinkedBlockingQueue, ThreadPoolExecutor, TimeUnit}
 
+import org.junit.jupiter.api.Disabled
 import skinny.http.{HTTP, Request}
 
 import scala.concurrent.duration.Duration
@@ -11,7 +12,7 @@ import scala.concurrent.{Await, ExecutionContext}
 class SimpleLoadTest extends org.scalatest.FunSuite {
 
   // ToDo BjB 17.09.18 : automated start of docker compose...
-  test("a thousand requests...") {
+  ignore("a thousand requests...") {
 
     implicit val ec: HTTP.EC = ExecutionContext.fromExecutor(new ThreadPoolExecutor(2, 2, 12, TimeUnit.SECONDS, new LinkedBlockingQueue[Runnable](100)))
 
