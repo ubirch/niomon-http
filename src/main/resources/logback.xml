@@ -1,0 +1,8 @@
+<configuration>
+
+
+  <logger name=" org.apache.kafka.clients" level="INFO"/>
+
+  <root level="DEBUG"/>
+
+</configuration>
