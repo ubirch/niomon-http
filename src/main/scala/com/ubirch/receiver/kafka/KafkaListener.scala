@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import akka.actor.ActorRef
 import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.KafkaConsumer.Conf
+import com.ubirch.receiver
 import com.ubirch.receiver.ResponseData
 import org.apache.kafka.clients.consumer.{ConsumerRecord, ConsumerRecords, OffsetResetStrategy}
 import org.apache.kafka.common.errors.WakeupException
@@ -75,7 +76,7 @@ class KafkaListener(kafkaUrl: String,
   private def handleError(ex: Throwable): Unit = {
     ex match {
       case e: WakeupException => if (running.get()) consumer.close()
-      case e: Exception => // ToDo BjB 17.09.18 : errorhandling
+      case e: Exception => receiver.system.log.error("error polling records", e)// ToDo BjB 17.09.18 : errorhandling
     }
   }
 }
