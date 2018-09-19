@@ -6,15 +6,17 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import com.ubirch.receiver
 import com.ubirch.receiver._
 
-import scala.io.StdIn
 
 class HttpServer {
 
+  private val port =receiver.conf.getInt("http.port")
 
   def serveHttp() {
-    val route: Route =
+    println(s"binding to port $port")
+    val route: Route = {
       path("") {
         extractRequest {
           req =>
@@ -28,22 +30,20 @@ class HttpServer {
 
             }
         }
+      } ~
+      path("status") {
+        complete("up")
       }
+    }
 
-    val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
-
+    Http().bindAndHandle(route, "0.0.0.0", port)
+    system.log.info(s"Server started at localhost:$port")
     // ToDo BjB 17.09.18 : Graceful shutdown
-    println(s"Server online at http://localhost:8080/\nPress RETURN to stop...")
-    StdIn.readLine()
-    bindingFuture
-      .flatMap(_.unbind())
-      .onComplete(_ => system.terminate())
+
   }
 
-  private def getHeaders(req: HttpRequest) = {
-    // ToDo BjB 18.09.18 : what else do we need here?
-    val contentType = Map("Content-Type" -> req.entity.contentType.mediaType.toString())
-
-    contentType
+  private def getHeaders(req: HttpRequest): Map[String, String] = {
+    Map("Content-Type" -> req.entity.contentType.mediaType.toString(),
+        "Request-URI" -> req.getUri().toString)
   }
 }
