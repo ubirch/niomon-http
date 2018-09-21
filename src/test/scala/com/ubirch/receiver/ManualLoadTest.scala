@@ -45,7 +45,7 @@ object ManualLoadTest {
 
     result.foreach {
       r => {
-        assert(r.response.status == 200)
+        assert(r.response.status == 201)
         assert(r.response.textBody.contains(r.input.toString))
       }
     }
