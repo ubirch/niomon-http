@@ -49,10 +49,8 @@ object Actors {
 
     private def outgoing(returnTo: ActorRef): Receive = {
 
-      case ResponseData(_, e) =>
-        log.debug(s"received output [$e]")
-        // ToDo BjB 21.09.18 : This is stupid of course
-        returnTo ! s"from kafka with love: [${new String(e.payload)}], with headers: ${e.headers.mkString}"
+      case reponse: ResponseData =>
+        returnTo ! reponse
         context.stop(self)
     }
   }

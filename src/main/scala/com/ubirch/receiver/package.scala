@@ -33,12 +33,12 @@ package object receiver {
   listener.startPolling()
 
 
-  def publish(requestData: RequestData): Future[String] = {
+  def publish(requestData: RequestData): Future[ResponseData] = {
     implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS)
 
     val dispatcher = system.actorOf(Props[RequestDispatcher], requestData.requestId)
 
-    dispatcher ? requestData map (_.asInstanceOf[String])
+    dispatcher ? requestData map (_.asInstanceOf[ResponseData])
   }
 
 

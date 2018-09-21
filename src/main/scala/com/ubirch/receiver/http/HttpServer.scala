@@ -4,6 +4,7 @@ import java.util.UUID
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.ubirch.kafkasupport.MessageEnvelope
@@ -13,7 +14,7 @@ import com.ubirch.receiver._
 
 class HttpServer {
 
-  private val port =receiver.conf.getInt("http.port")
+  private val port = receiver.conf.getInt("http.port")
 
   def serveHttp() {
     println(s"binding to port $port")
@@ -23,12 +24,12 @@ class HttpServer {
           req =>
             entity(as[Array[Byte]]) {
               input =>
-                val published = publish(RequestData(UUID.randomUUID().toString, MessageEnvelope(input, getHeaders(req))))
-                onComplete(published) {
+                val responseData = publish(RequestData(UUID.randomUUID().toString, MessageEnvelope(input, getHeaders(req))))
+                onComplete(responseData) {
                   output =>
-                    complete(output)
+                    // ToDo BjB 21.09.18 : Set response headers accordingly
+                    complete(output.map(_.envelope.payload))
                 }
-
             }
         }
       } ~
