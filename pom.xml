@@ -45,7 +45,19 @@
     <url>https://ubirch.com/</url>
   </organization>
 
+  <properties>
+    <kafka-support.version>1.0</kafka-support.version>
+    <skinny-framework.version>3.0.0</skinny-framework.version>
+    <config.version>1.3.3</config.version>
+  </properties>
+
   <dependencies>
+    <dependency>
+      <groupId>ubirch</groupId>
+      <artifactId>kafka-support</artifactId>
+      <version>${kafka-support.version}</version>
+    </dependency>
+
     <!-- scala, logging etc. -->
     <dependency>
       <groupId>org.scala-lang</groupId>
@@ -57,11 +69,7 @@
       <artifactId>scala-logging_${scala.major.version}</artifactId>
       <version>${scala-logging.version}</version>
     </dependency>
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <version>${logback-classic.version}</version>
-    </dependency>
+
     <!-- akka -->
     <dependency>
       <groupId>com.typesafe.akka</groupId>
@@ -96,11 +104,6 @@
       <artifactId>scala-kafka-client_${scala.major.version}</artifactId>
       <version>${simple.kafka.client.version}</version>
     </dependency>
-    <dependency>
-      <groupId>ubirch</groupId>
-      <artifactId>kafka-support</artifactId>
-      <version>1.0</version>
-    </dependency>
 
     <!-- test dependencies -->
     <dependency>
@@ -112,7 +115,7 @@
     <dependency>
       <groupId>org.skinny-framework</groupId>
       <artifactId>skinny-http-client_2.12</artifactId>
-      <version>3.0.0</version>
+      <version>${skinny-framework.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -137,9 +140,8 @@
     <dependency>
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
-      <version>1.3.3</version>
+      <version>${config.version}</version>
     </dependency>
-
 
     <dependency>
       <groupId>commons-io</groupId>
