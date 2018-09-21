@@ -96,7 +96,11 @@
       <artifactId>scala-kafka-client_${scala.major.version}</artifactId>
       <version>${simple.kafka.client.version}</version>
     </dependency>
-
+    <dependency>
+      <groupId>ubirch</groupId>
+      <artifactId>kafka-support</artifactId>
+      <version>1.0</version>
+    </dependency>
 
     <!-- test dependencies -->
     <dependency>

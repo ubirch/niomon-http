@@ -2,6 +2,7 @@ package com.ubirch.receiver
 
 import akka.actor.{ActorSystem, Props}
 import akka.testkit._
+import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver.Actors.ResponseDispatcher
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
@@ -17,7 +18,7 @@ class ResponseDispatcherTest extends TestKit(ActorSystem("RecordDispatcherTest")
     val responseDispatcher = system.actorOf(Props(classOf[ResponseDispatcher]))
 
     // when
-    responseDispatcher ! ResponseData("requestId", "value".getBytes, Map())
+    responseDispatcher ! ResponseData("requestId", MessageEnvelope("value".getBytes, Map()))
 
     // then
     receiver.expectMsgClass(classOf[ResponseData]).requestId should equal("requestId")

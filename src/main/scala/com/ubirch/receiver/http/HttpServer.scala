@@ -6,6 +6,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver
 import com.ubirch.receiver._
 
@@ -22,7 +23,7 @@ class HttpServer {
           req =>
             entity(as[Array[Byte]]) {
               input =>
-                val published = publish(RequestData(UUID.randomUUID().toString, input, getHeaders(req)))
+                val published = publish(RequestData(UUID.randomUUID().toString, MessageEnvelope(input, getHeaders(req))))
                 onComplete(published) {
                   output =>
                     complete(output)

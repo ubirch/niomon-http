@@ -8,6 +8,7 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
+import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver.Actors.{RequestDispatcher, ResponseDispatcher}
 import com.ubirch.receiver.kafka.{KafkaListener, KafkaPublisher}
 
@@ -15,8 +16,8 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 
 package object receiver {
 
-  final case class RequestData(requestId:String, value: Array[Byte], headers:Map[String, String])
-  final case class ResponseData(requestId:String, value: Array[Byte], headers:Map[String, String])
+  final case class RequestData(requestId:String, envelope:MessageEnvelope[Array[Byte]])
+  final case class ResponseData(requestId:String, envelope:MessageEnvelope[Array[Byte]])
 
   val conf: Config = ConfigFactory.load
   implicit val system: ActorSystem = ActorSystem("http-receiver")

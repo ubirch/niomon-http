@@ -40,18 +40,19 @@ object Actors {
 
     def receive: PartialFunction[Any, Unit] = {
 
-      case RequestData(k, v, m) =>
-        log.debug(s"received input $v")
-        publisher.send(key = k, value = v, headers = m)
+      case RequestData(k, e) =>
+        log.debug(s"received input [${e.payload.mkString}]")
+        publisher.send(key = k, e)
         become(outgoing(sender()))
 
     }
 
     private def outgoing(returnTo: ActorRef): Receive = {
 
-      case ResponseData(_, v, m) =>
-        log.debug(s"received output [$v]")
-        returnTo ! s"from kafka with love: [${v.mkString}] which is [${new String(v)}], with headers: ${m.mkString}"
+      case ResponseData(_, e) =>
+        log.debug(s"received output [$e]")
+        // ToDo BjB 21.09.18 : This is stupid of course
+        returnTo ! s"from kafka with love: [${new String(e.payload)}], with headers: ${e.headers.mkString}"
         context.stop(self)
     }
   }
