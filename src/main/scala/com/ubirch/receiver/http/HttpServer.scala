@@ -11,7 +11,7 @@ import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver
 import com.ubirch.receiver._
 
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 
 class HttpServer {
@@ -43,8 +43,10 @@ class HttpServer {
       }
     }
 
-    Http().bindAndHandle(route, "0.0.0.0", port)
-    system.log.info(s"Server started at localhost:$port")
+    Http().bindAndHandle(route, "0.0.0.0", port) onComplete {
+      case Success(v) => system.log.info(s"http server started: ${v.localAddress}")
+      case Failure(e) => system.log.error("http server start failed", e)
+    }
     // ToDo BjB 17.09.18 : Graceful shutdown
 
   }
