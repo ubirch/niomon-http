@@ -181,6 +181,7 @@
                   <filtering>true</filtering>
                   <includes>
                     <include>Dockerfile</include>
+                    <include>prepare-docker.sh</include>
                   </includes>
                 </resource>
               </resources>
