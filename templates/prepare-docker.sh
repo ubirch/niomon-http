@@ -1,6 +1,6 @@
 #! /bin/sh
 BASEDIR=$(dirname "$0")
-echo "v${version}" > version.txt
+echo "${version}" > version.txt
 tar -C $BASEDIR -cvf \
   ${artifactId}.tar \
   Dockerfile \
