@@ -1,22 +1,27 @@
 package com.ubirch.receiver.http
 
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
+import akka.actor.ActorRef
+import akka.pattern.ask
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.util.Timeout
+import com.typesafe.scalalogging.Logger
 import com.ubirch.kafkasupport.MessageEnvelope
-import com.ubirch.receiver
 import com.ubirch.receiver._
+import com.ubirch.receiver.actors.{PublisherToBeRenamed, RequestData, ResponseData}
 
 import scala.util.{Failure, Success}
 
 
-class HttpServer {
+class HttpServer(port: Int, publisherToBeRenamed: ActorRef) {
 
-  private val port = receiver.conf.getInt("http.port")
+  val log: Logger = Logger[HttpServer]
+  implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS)
 
   def serveHttp() {
     val route: Route = {
@@ -26,30 +31,33 @@ class HttpServer {
             entity(as[Array[Byte]]) {
               input =>
                 val requestId = UUID.randomUUID().toString
-                val responseData = publish(RequestData(requestId, MessageEnvelope(input, getHeaders(req))))
+                val responseData = publisherToBeRenamed ? RequestData(requestId, MessageEnvelope(input, getHeaders(req)))
                 onComplete(responseData) {
-                  case Success(result) =>
+                  case Success(res) =>
+                   val result=res.asInstanceOf[ResponseData]
                     // ToDo BjB 21.09.18 : Revise Headers
                     val contentType = determineContentType(result.envelope.headers)
-                    complete(HttpResponse(status=StatusCodes.Created,entity= HttpEntity(result.envelope.payload).withContentType(contentType)))
+                    complete(HttpResponse(status = StatusCodes.Created, entity = HttpEntity(result.envelope.payload).withContentType(contentType)))
                   case _ =>
                     complete(HttpResponse(StatusCodes.InternalServerError))
                 }
             }
         }
       } ~
-      path("status") {
-        complete("up")
-      }
+        path("status") {
+          complete("up")
+        }
     }
 
     Http().bindAndHandle(route, "0.0.0.0", port) onComplete {
-      case Success(v) => system.log.info(s"http server started: ${v.localAddress}")
-      case Failure(e) => system.log.error("http server start failed", e)
+      case Success(v) => log.info(s"http server started: ${v.localAddress}")
+      case Failure(e) => log.error("http server start failed", e)
     }
     // ToDo BjB 17.09.18 : Graceful shutdown
 
   }
+
+  private val CONTENT_TYPE = "Content-Type"
 
   private def determineContentType(headers: Map[String, String]) = {
     ContentType.parse(headers.getOrElse(CONTENT_TYPE, "")) match {
@@ -58,9 +66,8 @@ class HttpServer {
     }
   }
 
-  private val CONTENT_TYPE = "Content-Type"
   private def getHeaders(req: HttpRequest): Map[String, String] = {
     Map(CONTENT_TYPE -> req.entity.contentType.mediaType.toString(),
-        "Request-URI" -> req.getUri().toString)
+      "Request-URI" -> req.getUri().toString)
   }
 }

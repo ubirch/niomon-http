@@ -10,9 +10,9 @@ class KafkaPublisher(kafkaUrl: String, topic: String) {
 
   val producer = KafkaProducer(
     Conf(new StringSerializer(),
-         new ByteArraySerializer(),
-         bootstrapServers = kafkaUrl,
-         acks = "all")
+      new ByteArraySerializer(),
+      bootstrapServers = kafkaUrl,
+      acks = "all")
   )
 
 

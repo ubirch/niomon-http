@@ -5,6 +5,6 @@ import com.ubirch.receiver.http.HttpServer
 object Main {
 
   def main(args: Array[String]) {
-    new HttpServer().serveHttp()
+    new HttpServer(conf.getInt("http.port"), publisherToBeRenamed).serveHttp()
   }
 }

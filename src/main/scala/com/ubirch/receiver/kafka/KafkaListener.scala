@@ -5,9 +5,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import akka.actor.ActorRef
 import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.KafkaConsumer.Conf
+import com.typesafe.scalalogging.Logger
 import com.ubirch.kafkasupport.MessageEnvelope
-import com.ubirch.receiver
-import com.ubirch.receiver.ResponseData
+import com.ubirch.receiver.actors.ResponseData
 import org.apache.kafka.clients.consumer.{ConsumerRecords, OffsetResetStrategy}
 import org.apache.kafka.common.errors.WakeupException
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
@@ -15,19 +15,18 @@ import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeser
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
-class KafkaListener(kafkaUrl: String,
-                    topic: String,
-                    dispatcher: ActorRef) extends Runnable {
+class KafkaListener(kafkaUrl: String, topic: String, dispatcher: ActorRef) extends Runnable {
 
+  val log = Logger[KafkaListener]
 
   private val running: AtomicBoolean = new AtomicBoolean(true)
 
   val consumer = KafkaConsumer(
     Conf(new StringDeserializer(),
-         new ByteArrayDeserializer(),
-         bootstrapServers = kafkaUrl,
-         groupId = "http-receiver",
-         autoOffsetReset = OffsetResetStrategy.EARLIEST)
+      new ByteArrayDeserializer(),
+      bootstrapServers = kafkaUrl,
+      groupId = "http-receiver",
+      autoOffsetReset = OffsetResetStrategy.LATEST)
   )
 
   def run(): Unit = {
@@ -71,7 +70,7 @@ class KafkaListener(kafkaUrl: String,
   private def handleError(ex: Throwable): Unit = {
     ex match {
       case e: WakeupException => if (running.get()) consumer.close()
-      case e: Exception => receiver.system.log.error("error polling records", e) // ToDo BjB 17.09.18 : errorhandling
+      case e: Exception => log.error("error polling records", e) // ToDo BjB 17.09.18 : errorhandling
     }
   }
 }

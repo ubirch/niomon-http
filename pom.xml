@@ -107,6 +107,16 @@
       <artifactId>akka-slf4j_${scala.major.version}</artifactId>
       <version>${akka-slf4j.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.typesafe.akka</groupId>
+      <artifactId>akka-cluster_${scala.major.version}</artifactId>
+      <version>${akka.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.typesafe.akka</groupId>
+      <artifactId>akka-cluster-tools_${scala.major.version}</artifactId>
+      <version>${akka.version}</version>
+    </dependency>
 
     <!-- kafka -->
     <dependency>
