@@ -4,8 +4,8 @@ import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.TestProbe
 import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver.kafka.KafkaPublisher
-import org.mockito.{ArgumentMatchersSugar, IdiomaticMockito, MockitoSugar}
-import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
+import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMatchersSugar with BeforeAndAfterAll {
 
@@ -28,8 +28,8 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
 
   it should "forward response data to returnTo actor" in {
     //given
-    val returnTo=TestProbe()
-    val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler],TestProbe().ref, returnTo.ref, mock[KafkaPublisher]))
+    val returnTo = TestProbe()
+    val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], TestProbe().ref, returnTo.ref, mock[KafkaPublisher]))
     val responseData = ResponseData("requestId", MessageEnvelope("value".getBytes, Map()))
 
     // when
@@ -40,17 +40,17 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
   }
 
   it should "send deleteRequestRef with requestId to dispatcher handling response data" in {
-      //given
-      val dispatcher=TestProbe()
-      val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], dispatcher.ref, TestProbe().ref, mock[KafkaPublisher]))
-      val responseData = ResponseData("requestId", MessageEnvelope("value".getBytes, Map()))
+    //given
+    val dispatcher = TestProbe()
+    val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], dispatcher.ref, TestProbe().ref, mock[KafkaPublisher]))
+    val responseData = ResponseData("requestId", MessageEnvelope("value".getBytes, Map()))
 
-      // when
-      requestHandler ! responseData
+    // when
+    requestHandler ! responseData
 
-      // then
-      dispatcher.expectMsg(DeleteRequestRef(responseData.requestId))
-    }
+    // then
+    dispatcher.expectMsg(DeleteRequestRef(responseData.requestId))
+  }
 
   override protected def afterAll(): Unit = system.terminate()
 }
