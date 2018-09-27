@@ -13,12 +13,12 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
 import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver._
-import com.ubirch.receiver.actors.{PublisherToBeRenamed, RequestData, ResponseData}
+import com.ubirch.receiver.actors.{RequestData, ResponseData}
 
 import scala.util.{Failure, Success}
 
 
-class HttpServer(port: Int, publisherToBeRenamed: ActorRef) {
+class HttpServer(port: Int, dispatcher: ActorRef) {
 
   val log: Logger = Logger[HttpServer]
   implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS)
@@ -31,7 +31,7 @@ class HttpServer(port: Int, publisherToBeRenamed: ActorRef) {
             entity(as[Array[Byte]]) {
               input =>
                 val requestId = UUID.randomUUID().toString
-                val responseData = publisherToBeRenamed ? RequestData(requestId, MessageEnvelope(input, getHeaders(req)))
+                val responseData = dispatcher ? RequestData(requestId, MessageEnvelope(input, getHeaders(req)))
                 onComplete(responseData) {
                   case Success(res) =>
                    val result=res.asInstanceOf[ResponseData]

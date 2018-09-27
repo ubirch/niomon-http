@@ -5,23 +5,20 @@ import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver.kafka.KafkaPublisher
 
 
-class RequestActor(dispatcher: ActorRef, publisher: KafkaPublisher) extends Actor with ActorLogging {
+class HttpRequestHandler(dispatcher: ActorRef, returnTo: ActorRef, publisher: KafkaPublisher) extends Actor with ActorLogging {
 
-  import context._
-
-  def receive: PartialFunction[Any, Unit] = {
+  def receive: Receive = {
     case RequestData(k, e) =>
-      log.debug(s"received input with requestId [${k}]")
+      log.debug(s"received input with requestId [$k]")
       publisher.send(key = k, e)
-      become(outgoing(sender()))
-  }
-
-  private def outgoing(returnTo: ActorRef): Receive = {
     case response: ResponseData =>
       log.debug(s"received response with requestId [${response.requestId}]")
       returnTo ! response
       dispatcher ! DeleteRequestRef(response.requestId)
-      context.stop(self)
+  }
+
+  override def postStop(): Unit = {
+    log.debug("stopped")
   }
 }
 
