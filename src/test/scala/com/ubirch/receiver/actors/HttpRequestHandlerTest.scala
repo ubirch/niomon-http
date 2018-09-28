@@ -39,17 +39,17 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
     returnTo.expectMsg(responseData)
   }
 
-  it should "send deleteRequestRef with requestId to dispatcher handling response data" in {
+  it should "send UnregisterRequestHandler with requestId to registry after handling response data" in {
     //given
-    val dispatcher = TestProbe()
-    val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], dispatcher.ref, TestProbe().ref, mock[KafkaPublisher]))
+    val registry = TestProbe()
+    val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], registry.ref, TestProbe().ref, mock[KafkaPublisher]))
     val responseData = ResponseData("requestId", MessageEnvelope("value".getBytes, Map()))
 
     // when
     requestHandler ! responseData
 
     // then
-    dispatcher.expectMsg(DeleteRequestRef(responseData.requestId))
+    registry.expectMsg(UnregisterRequestHandler(responseData.requestId))
   }
 
   override protected def afterAll(): Unit = system.terminate()

@@ -5,7 +5,7 @@ import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver.kafka.KafkaPublisher
 
 
-class HttpRequestHandler(dispatcher: ActorRef, returnTo: ActorRef, publisher: KafkaPublisher) extends Actor with ActorLogging {
+class HttpRequestHandler(registry: ActorRef, respondTo: ActorRef, publisher: KafkaPublisher) extends Actor with ActorLogging {
 
   def receive: Receive = {
     case RequestData(k, e) =>
@@ -13,8 +13,8 @@ class HttpRequestHandler(dispatcher: ActorRef, returnTo: ActorRef, publisher: Ka
       publisher.send(key = k, e)
     case response: ResponseData =>
       log.debug(s"received response with requestId [${response.requestId}]")
-      returnTo ! response
-      dispatcher ! DeleteRequestRef(response.requestId)
+      respondTo ! response
+      registry ! UnregisterRequestHandler(response.requestId)
   }
 
   override def postStop(): Unit = {

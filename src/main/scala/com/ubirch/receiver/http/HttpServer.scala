@@ -3,24 +3,27 @@ package com.ubirch.receiver.http
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-import akka.actor.ActorRef
-import akka.pattern.ask
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.pattern.ask
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
 import com.ubirch.kafkasupport.MessageEnvelope
-import com.ubirch.receiver._
 import com.ubirch.receiver.actors.{RequestData, ResponseData}
 
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
 
-class HttpServer(port: Int, dispatcher: ActorRef) {
+class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSystem) {
 
   val log: Logger = Logger[HttpServer]
+  implicit val context: ExecutionContext = system.dispatcher
+  implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS)
 
   def serveHttp() {
@@ -34,7 +37,7 @@ class HttpServer(port: Int, dispatcher: ActorRef) {
                 val responseData = dispatcher ? RequestData(requestId, MessageEnvelope(input, getHeaders(req)))
                 onComplete(responseData) {
                   case Success(res) =>
-                   val result=res.asInstanceOf[ResponseData]
+                    val result = res.asInstanceOf[ResponseData]
                     // ToDo BjB 21.09.18 : Revise Headers
                     val contentType = determineContentType(result.envelope.headers)
                     complete(HttpResponse(status = StatusCodes.Created, entity = HttpEntity(result.envelope.payload).withContentType(contentType)))

@@ -2,44 +2,36 @@ package com.ubirch.receiver.actors
 
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import akka.cluster.pubsub.DistributedPubSubMediator
-import akka.cluster.pubsub.DistributedPubSubMediator.Publish
+import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.pattern.ask
 import akka.util.Timeout
-import com.ubirch.receiver.publisher
+import com.ubirch.receiver
 
-import scala.collection.mutable
+import scala.util.Success
 
-class Dispatcher(clusterMediator: ActorRef) extends Actor with ActorLogging {
-  val registry: mutable.Map[String, ActorRef] = mutable.Map()
 
-  override def preStart(): Unit = {
-    clusterMediator ! DistributedPubSubMediator.Subscribe("requests", self)
-  }
+class Dispatcher(registry: ActorRef, handlerCreator: HttpRequestHandlerCreator) extends Actor with ActorLogging {
+
+
+  implicit val timeout: Timeout = Timeout(100, TimeUnit.MILLISECONDS)
+
+  import context._
 
   override def receive: Receive = {
-    case cr: CreateRequestRef =>
-      log.debug(s"received CreateRequestRef with requestId [${cr.requestId}] for actor [${cr.actorRef.toString()}]")
-      registry.put(cr.requestId, cr.actorRef)
-
-    case dr: DeleteRequestRef =>
-      log.debug(s"received DeleteRequestRef with requestId [${dr.requestId}]")
-      registry.remove(dr.requestId).foreach(context.stop)
-
     case req: RequestData =>
       log.debug(s"received RequestData with requestId [${req.requestId}]")
       implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS)
-      val reqHandler = context.actorOf(Props(classOf[HttpRequestHandler], self, sender(), publisher), req.requestId)
-      clusterMediator ! Publish("requests", CreateRequestRef(req.requestId, reqHandler))
+      val reqHandler = handlerCreator(context, registry, sender(), req.requestId, receiver.publisher)
+      registry ! RegisterRequestHandler(RequestHandlerReference(req.requestId, reqHandler))
       reqHandler ! req
 
     case resp: ResponseData =>
       log.debug(s"received ResponseData with requestId [${resp.requestId}]")
-      registry.get(resp.requestId) match {
-        case Some(reqHandler) =>
-          log.debug(s"forwarding response with requestId [${resp.requestId}] to actor [${reqHandler.toString()}]")
-          reqHandler ! resp
-        case None => log.error(s"could not find actor for request ${resp.requestId}")
+      (registry ? ResolveRequestHandler(resp.requestId)) onComplete {
+        case Success(Some(reqHandler: RequestHandlerReference)) =>
+          log.debug(s"forwarding response with requestId [${resp.requestId}] to actor [${reqHandler.actorRef.toString()}]")
+          reqHandler.actorRef ! resp
+        case _ => log.error(s"could not find actor for request ${resp.requestId}")
       }
   }
 }
