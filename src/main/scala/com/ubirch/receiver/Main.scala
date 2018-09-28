@@ -3,8 +3,9 @@ package com.ubirch.receiver
 import akka.actor
 import akka.actor.{ActorSystem, ExtendedActorSystem, Props}
 import akka.cluster.Cluster
+import akka.cluster.pubsub.DistributedPubSub
 import com.typesafe.config.{Config, ConfigFactory}
-import com.ubirch.receiver.actors.{Dispatcher, Registry}
+import com.ubirch.receiver.actors.{ClusterAwareRegistry, Dispatcher, Registry}
 import com.ubirch.receiver.http.HttpServer
 import com.ubirch.receiver.kafka.KafkaListener
 
@@ -21,7 +22,8 @@ object Main {
     val kafkaUrl: String = conf.getString("kafka.url")
 
     val registry: actor.ActorRef = system.actorOf(Props(classOf[Registry]), "registry")
-    val dispatcher: actor.ActorRef = system.actorOf(Props(classOf[Dispatcher], registry, actors.requestHandlerCreator), "dispatcher")
+    val clusterRegistry= system.actorOf(Props(classOf[ClusterAwareRegistry], DistributedPubSub(system).mediator, registry), "clusterRegistry")
+    val dispatcher: actor.ActorRef = system.actorOf(Props(classOf[Dispatcher], clusterRegistry, actors.requestHandlerCreator), "dispatcher")
     val listener = new KafkaListener(kafkaUrl, conf.getString("kafka.topic.outgoing"), dispatcher)
     listener.startPolling()
 

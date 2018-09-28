@@ -9,7 +9,10 @@ import com.ubirch.receiver
 
 import scala.util.Success
 
-
+/**
+  * Creates a HttpRequestHandler for each incoming RequestData from HTTP.
+  * Routes the responses from kafka to the formerly created HttpRequestHandler
+  */
 class Dispatcher(registry: ActorRef, handlerCreator: HttpRequestHandlerCreator) extends Actor with ActorLogging {
 
 

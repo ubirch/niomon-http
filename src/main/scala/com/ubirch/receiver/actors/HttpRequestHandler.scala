@@ -4,8 +4,12 @@ import akka.actor.{Actor, ActorLogging, ActorRef}
 import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver.kafka.KafkaPublisher
 
-
-class HttpRequestHandler(registry: ActorRef, respondTo: ActorRef, publisher: KafkaPublisher) extends Actor with ActorLogging {
+/**
+  * Each actor of this type serves one specific HTTP request.
+  * From each request the request data is published kafka.
+  * When the responseData arrives from kafka it is send to the original requester
+  */
+class HttpRequestHandler(registry: ActorRef, requester: ActorRef, publisher: KafkaPublisher) extends Actor with ActorLogging {
 
   def receive: Receive = {
     case RequestData(k, e) =>
@@ -13,7 +17,7 @@ class HttpRequestHandler(registry: ActorRef, respondTo: ActorRef, publisher: Kaf
       publisher.send(key = k, e)
     case response: ResponseData =>
       log.debug(s"received response with requestId [${response.requestId}]")
-      respondTo ! response
+      requester ! response
       registry ! UnregisterRequestHandler(response.requestId)
   }
 
