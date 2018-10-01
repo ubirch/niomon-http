@@ -22,12 +22,6 @@ class KafkaPublisher(kafkaUrl: String, topic: String) {
     producer.send(record)
   }
 
-  private def asKafkaHeaders(headers: Map[String, String]) = {
-    headers.map {
-      case (k: String, v: Any) => new RecordHeader(k, v.getBytes)
-    }
-  }
-
   def shutDown(): Unit = {
     producer.close()
   }

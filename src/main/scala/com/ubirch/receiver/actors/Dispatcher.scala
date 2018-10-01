@@ -5,7 +5,6 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.pattern.ask
 import akka.util.Timeout
-import com.ubirch.receiver
 
 import scala.util.Success
 
@@ -24,7 +23,7 @@ class Dispatcher(registry: ActorRef, handlerCreator: HttpRequestHandlerCreator) 
     case req: RequestData =>
       log.debug(s"received RequestData with requestId [${req.requestId}]")
       implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS)
-      val reqHandler = handlerCreator(context, registry, sender(), req.requestId, receiver.publisher)
+      val reqHandler = handlerCreator(context, registry, sender(), req.requestId)
       registry ! RegisterRequestHandler(RequestHandlerReference(req.requestId, reqHandler))
       reqHandler ! req
 

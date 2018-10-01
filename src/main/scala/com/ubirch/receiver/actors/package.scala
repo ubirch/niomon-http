@@ -5,12 +5,11 @@ import com.ubirch.receiver.kafka.KafkaPublisher
 
 package object actors {
 
-  type HttpRequestHandlerCreator = (ActorRefFactory, ActorRef, ActorRef, String, KafkaPublisher) => ActorRef
+  type HttpRequestHandlerCreator = (ActorRefFactory, ActorRef, ActorRef, String) => ActorRef
 
-  val requestHandlerCreator: HttpRequestHandlerCreator =
+  def requestHandlerCreator(kafkaPublisher:KafkaPublisher): HttpRequestHandlerCreator =
     (factory: ActorRefFactory,
      registry: ActorRef,
      respondTo: ActorRef,
-     requestId: String,
-     kafkaPublisher: KafkaPublisher) => factory.actorOf(Props(classOf[HttpRequestHandler], registry, respondTo, kafkaPublisher), requestId)
+     requestId: String) => factory.actorOf(Props(classOf[HttpRequestHandler], registry, respondTo, kafkaPublisher), requestId)
 }
