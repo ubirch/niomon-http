@@ -1,16 +1,35 @@
 version: '2'
 services:
-  #  http-receiver:
-  #    build: .
-  #    depends_on:
-  #      - kafka
-  #      - zookeeper
-  #    ports:
-  #      - "8080:8080"
-  #    environment:
-  #      KAFKA_URL: "kafka:9092"
-  #      KAFKA_TOPIC_INCOMING_REQUESTS: "incoming"
-  #      KAFKA_TOPIC_OUTGOING_REQUESTS: "incoming"
+  http-receiver-1:
+    build: target/.
+    depends_on:
+    - kafka
+    - zookeeper
+    ports:
+    - "8080:8080"
+    - "2552"
+    hostname: "http-receiver-1"
+    environment:
+      KAFKA_URL: "kafka:9092"
+      KAFKA_TOPIC_HTTP2INC_REQUESTS: "incoming"
+      KAFKA_TOPIC_OUT2HTTP_REQUESTS: "incoming"
+      AKKA_CLUSTER_NODE_NAME: "http-receiver-1"
+      CLUSTER_SEED_NODES : "akka://http-receiver@http-receiver-1:2552,akka://http-receiver@http-receiver-2:2552"
+  http-receiver-2:
+    build: target/.
+    depends_on:
+    - kafka
+    - zookeeper
+    ports:
+    - "8081:8080"
+    - "2552"
+    hostname: "http-receiver-2"
+    environment:
+      KAFKA_URL: "kafka:9092"
+      KAFKA_TOPIC_HTTP2INC_REQUESTS: "incoming"
+      KAFKA_TOPIC_OUT2HTTP_REQUESTS: "incoming"
+      AKKA_CLUSTER_NODE_NAME: "http-receiver-2"
+      CLUSTER_SEED_NODES : "akka://http-receiver@http-receiver-1:2552,akka://http-receiver@http-receiver-2:2552"
   zookeeper:
     image: wurstmeister/zookeeper
     ports:
@@ -20,7 +39,7 @@ services:
     ports:
     - "9092:9092"
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ADVERTISED_HOST_NAME: kafka
       KAFKA_CREATE_TOPICS_SEPARATOR: |
       KAFKA_CREATE_TOPICS: "incoming:1:1"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
