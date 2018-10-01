@@ -7,9 +7,10 @@ import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.ubirch.receiver.actors.ClusterAwareRegistry.REQUESTS_TOPIC
+import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers}
 
-class ClusterAwareRegistryTest extends FlatSpec with Matchers {
+class ClusterAwareRegistryTest extends FlatSpec with MockitoSugar with Matchers {
   private implicit val system: ActorSystem = ActorSystem("ClusterAwareRegistry")
   private implicit val timeout: Timeout = Timeout(1, TimeUnit.SECONDS)
 
@@ -53,7 +54,7 @@ class ClusterAwareRegistryTest extends FlatSpec with Matchers {
 
     //then
     registry.expectMsg(RegisterRequestHandler(RequestHandlerReference("id", handler)))
-    clusterPubSub.receiveN(2) should contain (
+    clusterPubSub.receiveN(2) should contain(
       Publish(REQUESTS_TOPIC, RegisterRequestHandlerInTheCluster(RequestHandlerReference("id", handler)))
     )
   }
@@ -71,6 +72,33 @@ class ClusterAwareRegistryTest extends FlatSpec with Matchers {
     //then
     registry.expectMsg(RegisterRequestHandler(RequestHandlerReference("id", handler)))
     clusterPubSub.expectNoMessage()
+  }
+
+  it should "publish all handler references from registry to the cluster if a new node joined" in {
+    val clusterPubSub = TestProbe()
+    val registry = system.actorOf(Props[Registry])
+    val clusterRegistry = system.actorOf(Props(classOf[ClusterAwareRegistry], clusterPubSub.ref, registry))
+    registry ! RegisterRequestHandler(RequestHandlerReference("id", handler))
+
+    //when
+    clusterRegistry ! NewMemberJoined
+
+    //then
+
+    clusterPubSub.receiveN(2) should contain(
+      Publish(REQUESTS_TOPIC, RegisterAllRequestHandlersInTheCluster(List(RequestHandlerReference("id", handler))))
+    )
+  }
+
+  it should "register all handler references from cluster to registry" in {
+    val registry = TestProbe()
+    val clusterRegistry = system.actorOf(Props(classOf[ClusterAwareRegistry], TestProbe().ref, registry.ref))
+
+    //when
+    clusterRegistry ! RegisterAllRequestHandlersInTheCluster(List(RequestHandlerReference("id", handler)))
+
+    //then
+    registry.expectMsg(RegisterAllRequestHandlers(List(RequestHandlerReference("id", handler))))
   }
 
   it should "unregister handlers from the cluster in registry without republishing" in {

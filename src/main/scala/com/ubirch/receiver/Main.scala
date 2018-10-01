@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem, Address, AddressFromURIString, Props}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import com.typesafe.config.{Config, ConfigFactory}
-import com.ubirch.receiver.actors.{ClusterAwareRegistry, Dispatcher, Registry}
+import com.ubirch.receiver.actors.{ClusterAwareRegistry, ClusterListener, Dispatcher, Registry}
 import com.ubirch.receiver.http.HttpServer
 import com.ubirch.receiver.kafka.{KafkaListener, KafkaPublisher}
 
@@ -58,7 +58,9 @@ object Main {
   private def createRegistry(system: ActorSystem, isCluster: Boolean): ActorRef = {
     if (isCluster) {
       val registry: ActorRef = system.actorOf(Props(classOf[Registry]), "registry")
-      system.actorOf(Props(classOf[ClusterAwareRegistry], DistributedPubSub(system).mediator, registry), "clusterRegistry")
+      val clusterRegistry = system.actorOf(Props(classOf[ClusterAwareRegistry], DistributedPubSub(system).mediator, registry), "clusterRegistry")
+      system.actorOf(Props(classOf[ClusterListener],clusterRegistry ))
+      clusterRegistry
     } else {
       system.actorOf(Props(classOf[Registry]), "registry")
     }

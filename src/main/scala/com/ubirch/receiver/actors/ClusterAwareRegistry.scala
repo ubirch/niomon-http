@@ -41,14 +41,18 @@ class ClusterAwareRegistry(clusterPubSub: ActorRef, registry: ActorRef) extends 
       registry ! unreg
       clusterPubSub ! Publish(REQUESTS_TOPIC, UnregisterRequestHandlerInTheCluster(unreg.requestId))
 
-   case reg: RegisterRequestHandlerInTheCluster =>
-      if (sender()!=self){
+    case reg: RegisterRequestHandlerInTheCluster =>
+      if (sender() != self) {
         log.debug(s"RegisterRequestHandlerCluster ${reg.requestHandlerReference.requestId}")
         registry ! RegisterRequestHandler(reg.requestHandlerReference)
       }
 
+    case regAll: RegisterAllRequestHandlersInTheCluster =>
+      log.debug(s"RegisterAllRequestHandlersInTheCluster ${regAll.handerReferences.mkString}")
+      registry ! RegisterAllRequestHandlers(regAll.handerReferences)
+
     case unreg: UnregisterRequestHandlerInTheCluster =>
-      if (sender()!=self){
+      if (sender() != self) {
         log.debug(s"UnregisterRequestHandlerCluster ${unreg.requestId}")
         registry ! UnregisterRequestHandler(unreg.requestId)
       }
@@ -61,9 +65,21 @@ class ClusterAwareRegistry(clusterPubSub: ActorRef, registry: ActorRef) extends 
           sendTo ! Some(reqHandler)
         case _ => sendTo ! None
       }
+    case NewMemberJoined ⇒
+      log.debug("cluster member joined. Publishing all handler references")
+      (registry ? ResolveAllRequestHandlers) onComplete {
+        case Success(references: List[RequestHandlerReference]) =>
+          log.debug(s"publishing  ${references.mkString}")
+          clusterPubSub ! Publish(REQUESTS_TOPIC, RegisterAllRequestHandlersInTheCluster(references))
+        case _ => log.error("could not resolve all handler references")
+      }
   }
 }
 
 case class RegisterRequestHandlerInTheCluster(requestHandlerReference: RequestHandlerReference)
 
 case class UnregisterRequestHandlerInTheCluster(requestId: String)
+
+case class RegisterAllRequestHandlersInTheCluster(handerReferences: List[RequestHandlerReference])
+
+case class NewMemberJoined()
