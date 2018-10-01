@@ -18,7 +18,7 @@ class Registry extends Actor with ActorLogging {
       registry.put(reg.requestHandlerReference.requestId, reg.requestHandlerReference.actorRef)
     case unreg: UnregisterRequestHandler =>
       log.debug(s"UnregisterRequestHandler ${unreg.requestId}")
-      //registry.remove(unreg.requestId).foreach(context.stop)
+      registry.remove(unreg.requestId).foreach(context.stop)
     case resolve: ResolveRequestHandler =>
       registry.get(resolve.requestId) match {
         case Some(ref) =>
