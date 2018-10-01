@@ -20,9 +20,9 @@ object ClusterAwareRegistry {
   * Acts as Registry for requestId -> HttpRequestHandler
   * Delegates to Registry and syncs with other cluster nodes via cluster PubSub.
   */
-// ToDo BjB 28.09.18 : WIP This guy must populate the empty Regitry on startup from other nodes.
-class ClusterAwareRegistry(clusterPubSub:ActorRef, registry:ActorRef) extends Actor with ActorLogging {
+class ClusterAwareRegistry(clusterPubSub: ActorRef, registry: ActorRef) extends Actor with ActorLogging {
   implicit val timeout: Timeout = Timeout(100, TimeUnit.MILLISECONDS)
+
   import context._
 
 
@@ -31,23 +31,39 @@ class ClusterAwareRegistry(clusterPubSub:ActorRef, registry:ActorRef) extends Ac
   }
 
   override def receive: Receive = {
-        case reg: RegisterRequestHandler =>
-          log.debug(s"RegisterRequestHandler ${reg.requestHandlerReference.requestId}")
-          registry ! reg
-          if (sender()!=self) {
-            clusterPubSub ! Publish(REQUESTS_TOPIC, reg)
-          }
-        case unreg: UnregisterRequestHandler =>
-          log.debug(s"UnregisterRequestHandler ${unreg.requestId}")
-          registry ! unreg
-          if (sender()!=self) {
-            clusterPubSub ! Publish(REQUESTS_TOPIC, unreg)
-          }
-        case resolve: ResolveRequestHandler =>
-          val sendTo= sender()
-          (registry ? resolve) onComplete {
-            case Success(Some(reqHandler: RequestHandlerReference)) => sendTo ! Some(reqHandler)
-            case _ => sendTo ! None
-          }
+    case reg: RegisterRequestHandler =>
+      log.debug(s"RegisterRequestHandler ${reg.requestHandlerReference.requestId}")
+      registry ! reg
+      clusterPubSub ! Publish(REQUESTS_TOPIC, RegisterRequestHandlerInTheCluster(reg.requestHandlerReference))
+
+    case unreg: UnregisterRequestHandler =>
+      log.debug(s"UnregisterRequestHandler ${unreg.requestId}")
+      registry ! unreg
+      clusterPubSub ! Publish(REQUESTS_TOPIC, UnregisterRequestHandlerInTheCluster(unreg.requestId))
+
+   case reg: RegisterRequestHandlerInTheCluster =>
+      if (sender()!=self){
+        log.debug(s"RegisterRequestHandlerCluster ${reg.requestHandlerReference.requestId}")
+        registry ! RegisterRequestHandler(reg.requestHandlerReference)
       }
+
+    case unreg: UnregisterRequestHandlerInTheCluster =>
+      if (sender()!=self){
+        log.debug(s"UnregisterRequestHandlerCluster ${unreg.requestId}")
+        registry ! UnregisterRequestHandler(unreg.requestId)
+      }
+
+    case resolve: ResolveRequestHandler =>
+      val sendTo = sender()
+      (registry ? resolve) onComplete {
+        case Success(Some(reqHandler: RequestHandlerReference)) =>
+          log.debug(s"resolved handler ${reqHandler.requestId}")
+          sendTo ! Some(reqHandler)
+        case _ => sendTo ! None
+      }
+  }
 }
+
+case class RegisterRequestHandlerInTheCluster(requestHandlerReference: RequestHandlerReference)
+
+case class UnregisterRequestHandlerInTheCluster(requestId: String)

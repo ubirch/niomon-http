@@ -14,18 +14,21 @@ class Registry extends Actor with ActorLogging {
 
   override def receive: Receive = {
     case reg: RegisterRequestHandler =>
+      log.debug(s"RegisterRequestHandler ${reg.requestHandlerReference.requestId}")
       registry.put(reg.requestHandlerReference.requestId, reg.requestHandlerReference.actorRef)
     case unreg: UnregisterRequestHandler =>
+      log.debug(s"UnregisterRequestHandler ${unreg.requestId}")
       registry.remove(unreg.requestId).foreach(context.stop)
     case resolve: ResolveRequestHandler =>
       registry.get(resolve.requestId) match {
         case Some(ref) =>
+          log.debug(s"resolved handler ${resolve.requestId}")
           sender() ! Some(RequestHandlerReference(resolve.requestId, ref))
         case None => sender() ! None
       }
   }
 
-  }
+}
 
 case class RequestHandlerReference(requestId: String, actorRef: ActorRef)
 

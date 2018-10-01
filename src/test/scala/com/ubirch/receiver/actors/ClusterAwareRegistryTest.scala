@@ -17,7 +17,7 @@ class ClusterAwareRegistryTest extends FlatSpec with Matchers {
 
   behavior of "ClusterAwareRegistry"
 
-  it should "register itself to PublishSubscibe REQUESTS_TOPIC in cluster at startup" in {
+  it must "register itself to PublishSubscibe REQUESTS_TOPIC in cluster at startup" in {
     // given
     val clusterPubSub = TestProbe()
 
@@ -28,7 +28,7 @@ class ClusterAwareRegistryTest extends FlatSpec with Matchers {
     clusterPubSub.expectMsg(Subscribe(REQUESTS_TOPIC, clusterRegistry))
   }
 
-  it should "delegate registering to Registry and resolve handlers from there" in {
+  it should "delegate registering to registry and resolve handlers from there" in {
     val probe = TestProbe()
     val registry = system.actorOf(Props[Registry])
     val clusterRegistry = system.actorOf(Props(classOf[ClusterAwareRegistry], TestProbe().ref, registry))
@@ -41,7 +41,7 @@ class ClusterAwareRegistryTest extends FlatSpec with Matchers {
     probe.expectMsg(Some(RequestHandlerReference("id", handler)))
   }
 
-  it should "register handlers in Registry and publish the fact to the cluster" in {
+  it should "register handlers in registry and publish the fact to the cluster" in {
     val registry = TestProbe()
     val clusterPubSub = TestProbe()
     val clusterRegistry = system.actorOf(Props(classOf[ClusterAwareRegistry], clusterPubSub.ref, registry.ref))
@@ -54,23 +54,36 @@ class ClusterAwareRegistryTest extends FlatSpec with Matchers {
     //then
     registry.expectMsg(RegisterRequestHandler(RequestHandlerReference("id", handler)))
     clusterPubSub.receiveN(2) should contain (
-      Publish(REQUESTS_TOPIC, RegisterRequestHandler(RequestHandlerReference("id", handler)))
+      Publish(REQUESTS_TOPIC, RegisterRequestHandlerInTheCluster(RequestHandlerReference("id", handler)))
     )
   }
 
-  it should "unregister handlers in Registry and publish the fact to the cluster" in {
+  it should "register handlers from the cluster in registry without republishing" in {
+    val registry = TestProbe()
+    val clusterPubSub = TestProbe()
+    val clusterRegistry = system.actorOf(Props(classOf[ClusterAwareRegistry], clusterPubSub.ref, registry.ref))
+    clusterPubSub.expectMsg(Subscribe(REQUESTS_TOPIC, clusterRegistry))
+
+    //when
+    clusterRegistry ! RegisterRequestHandlerInTheCluster(RequestHandlerReference("id", handler))
+
+
+    //then
+    registry.expectMsg(RegisterRequestHandler(RequestHandlerReference("id", handler)))
+    clusterPubSub.expectNoMessage()
+  }
+
+  it should "unregister handlers from the cluster in registry without republishing" in {
     val clusterPubSub = TestProbe()
     val registry = TestProbe()
     val clusterRegistry = system.actorOf(Props(classOf[ClusterAwareRegistry], clusterPubSub.ref, registry.ref))
-
+    clusterPubSub.expectMsg(Subscribe(REQUESTS_TOPIC, clusterRegistry))
     //when
-    clusterRegistry ! UnregisterRequestHandler("id")
+    clusterRegistry ! UnregisterRequestHandlerInTheCluster("id")
 
     //then
     registry.expectMsg(UnregisterRequestHandler("id"))
-    clusterPubSub.receiveN(2) should contain (
-      Publish(REQUESTS_TOPIC, UnregisterRequestHandler("id"))
-    )
+    clusterPubSub.expectNoMessage()
   }
 
 }
