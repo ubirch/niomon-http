@@ -14,7 +14,7 @@ services:
       KAFKA_TOPIC_HTTP2INC_REQUESTS: "incoming"
       KAFKA_TOPIC_OUT2HTTP_REQUESTS: "incoming"
       AKKA_CLUSTER_NODE_NAME: "http-receiver-1"
-      CLUSTER_SEED_NODES : "akka://http-receiver@http-receiver-1:2552,akka://http-receiver@http-receiver-2:2552"
+      CLUSTER_SEED_NODES : "akka.tcp://http-receiver@http-receiver-1:2552,akka.tcp://http-receiver@http-receiver-2:2552"
   http-receiver-2:
     build: target/.
     depends_on:
@@ -29,7 +29,7 @@ services:
       KAFKA_TOPIC_HTTP2INC_REQUESTS: "incoming"
       KAFKA_TOPIC_OUT2HTTP_REQUESTS: "incoming"
       AKKA_CLUSTER_NODE_NAME: "http-receiver-2"
-      CLUSTER_SEED_NODES : "akka://http-receiver@http-receiver-1:2552,akka://http-receiver@http-receiver-2:2552"
+      CLUSTER_SEED_NODES : "akka.tcp://http-receiver@http-receiver-1:2552,akka.tcp://http-receiver@http-receiver-2:2552"
   zookeeper:
     image: wurstmeister/zookeeper
     ports:

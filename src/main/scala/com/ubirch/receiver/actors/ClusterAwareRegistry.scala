@@ -68,9 +68,10 @@ class ClusterAwareRegistry(clusterPubSub: ActorRef, registry: ActorRef) extends 
     case NewMemberJoined ⇒
       log.debug("cluster member joined. Publishing all handler references")
       (registry ? ResolveAllRequestHandlers) onComplete {
-        case Success(references: List[RequestHandlerReference]) =>
-          log.debug(s"publishing  ${references.mkString}")
-          clusterPubSub ! Publish(REQUESTS_TOPIC, RegisterAllRequestHandlersInTheCluster(references))
+        // ToDo BjB 01.10.18 : fix compiler warning
+        case Success(allHandlers: AllRequestHandlerReferences) =>
+          log.debug(s"publishing  ${allHandlers.handerReferences.mkString}")
+          clusterPubSub ! Publish(REQUESTS_TOPIC, RegisterAllRequestHandlersInTheCluster(allHandlers.handerReferences))
         case _ => log.error("could not resolve all handler references")
       }
   }

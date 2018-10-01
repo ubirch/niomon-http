@@ -29,7 +29,7 @@ class Registry extends Actor with ActorLogging {
     case ResolveAllRequestHandlers =>
       val references = registry.map(x => RequestHandlerReference(x._1, x._2)).toList
       log.debug(s"resolved all  ${references.mkString}")
-      sender() ! references
+      sender() ! AllRequestHandlerReferences(references)
     case RegisterAllRequestHandlers(references) =>
       log.debug(s"registering all of ${references.mkString}")
       references.foreach(ref => registry.put(ref.requestId, ref.actorRef))
@@ -40,10 +40,12 @@ case class RequestHandlerReference(requestId: String, actorRef: ActorRef)
 
 case class RegisterRequestHandler(requestHandlerReference: RequestHandlerReference)
 
+case class RegisterAllRequestHandlers(handerReferences: List[RequestHandlerReference])
+
 case class UnregisterRequestHandler(requestId: String)
 
 case class ResolveRequestHandler(requestId: String)
 
 case class ResolveAllRequestHandlers()
 
-case class RegisterAllRequestHandlers(handerReferences: List[RequestHandlerReference])
+case class AllRequestHandlerReferences(handerReferences: List[RequestHandlerReference])

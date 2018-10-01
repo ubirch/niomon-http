@@ -70,8 +70,8 @@ class RegistryTest extends FlatSpec with Matchers {
 
 
     //then
-    val someReferencesToReferenceses = probe.expectMsgClass[List[RequestHandlerReference]](classOf[List[RequestHandlerReference]])
-    someReferencesToReferenceses should contain allOf(
+    val someReferences = probe.expectMsgClass[AllRequestHandlerReferences](classOf[AllRequestHandlerReferences])
+    someReferences.handerReferences should contain allOf(
       RequestHandlerReference("id1", handler),
       RequestHandlerReference("id2", handler),
       RequestHandlerReference("id3", handler)
@@ -92,8 +92,8 @@ class RegistryTest extends FlatSpec with Matchers {
 
 
     //then
-    val someReferencesToReferenceses = probe.expectMsgClass[List[RequestHandlerReference]](classOf[List[RequestHandlerReference]])
-    someReferencesToReferenceses should contain allOf(
+    val someReferences = probe.expectMsgClass[AllRequestHandlerReferences](classOf[AllRequestHandlerReferences])
+    someReferences.handerReferences should contain allOf(
       RequestHandlerReference("id1", handler),
       RequestHandlerReference("id2", handler),
       RequestHandlerReference("id3", handler)
@@ -111,8 +111,8 @@ class RegistryTest extends FlatSpec with Matchers {
     probe.send(registry, ResolveAllRequestHandlers)
 
     //then
-    val someReferencesToReferenceses = probe.expectMsgClass[List[RequestHandlerReference]](classOf[List[RequestHandlerReference]])
-    someReferencesToReferenceses should contain allOf(
+    val someReferences = probe.expectMsgClass[AllRequestHandlerReferences](classOf[AllRequestHandlerReferences])
+    someReferences.handerReferences should contain allOf(
       RequestHandlerReference("existing", handler),
       RequestHandlerReference("new", handler)
     )
