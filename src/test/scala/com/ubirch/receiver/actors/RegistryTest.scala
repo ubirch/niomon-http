@@ -57,4 +57,66 @@ class RegistryTest extends FlatSpec with Matchers {
     watch.expectTerminated(handler)
   }
 
+
+  it can "resolve all handlers" in {
+    val probe = TestProbe()
+    val registry = system.actorOf(Props[Registry])
+
+    //when
+    registry ! RegisterRequestHandler(RequestHandlerReference("id1", handler))
+    registry ! RegisterRequestHandler(RequestHandlerReference("id2", handler))
+    registry ! RegisterRequestHandler(RequestHandlerReference("id3", handler))
+    probe.send(registry, ResolveAllRequestHandlers)
+
+
+    //then
+    val someReferencesToReferenceses = probe.expectMsgClass[List[RequestHandlerReference]](classOf[List[RequestHandlerReference]])
+    someReferencesToReferenceses should contain allOf(
+      RequestHandlerReference("id1", handler),
+      RequestHandlerReference("id2", handler),
+      RequestHandlerReference("id3", handler)
+    )
+  }
+
+  it can "register multiple handlers at once" in {
+    val probe = TestProbe()
+    val registry = system.actorOf(Props[Registry])
+
+    //when
+    registry ! RegisterAllRequestHandlers(
+      List(RequestHandlerReference("id1", handler),
+        RequestHandlerReference("id2", handler),
+        RequestHandlerReference("id3", handler)))
+
+    probe.send(registry, ResolveAllRequestHandlers)
+
+
+    //then
+    val someReferencesToReferenceses = probe.expectMsgClass[List[RequestHandlerReference]](classOf[List[RequestHandlerReference]])
+    someReferencesToReferenceses should contain allOf(
+      RequestHandlerReference("id1", handler),
+      RequestHandlerReference("id2", handler),
+      RequestHandlerReference("id3", handler)
+    )
+  }
+
+  it can "register multiple handlers without loosing existing ones" in {
+    val probe = TestProbe()
+    val registry = system.actorOf(Props[Registry])
+
+    //when
+    registry ! RegisterRequestHandler(RequestHandlerReference("existing", handler))
+    registry ! RegisterAllRequestHandlers(List(RequestHandlerReference("new", handler)))
+
+    probe.send(registry, ResolveAllRequestHandlers)
+
+    //then
+    val someReferencesToReferenceses = probe.expectMsgClass[List[RequestHandlerReference]](classOf[List[RequestHandlerReference]])
+    someReferencesToReferenceses should contain allOf(
+      RequestHandlerReference("existing", handler),
+      RequestHandlerReference("new", handler)
+    )
+  }
+
+
 }
