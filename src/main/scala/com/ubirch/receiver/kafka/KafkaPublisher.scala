@@ -10,9 +10,9 @@ class KafkaPublisher(kafkaUrl: String, topic: String) {
 
   val producer = KafkaProducer(
     Conf(new StringSerializer(),
-         new ByteArraySerializer(),
-         bootstrapServers = kafkaUrl,
-         acks = "all")
+      new ByteArraySerializer(),
+      bootstrapServers = kafkaUrl,
+      acks = "all")
   )
 
 
@@ -20,12 +20,6 @@ class KafkaPublisher(kafkaUrl: String, topic: String) {
     val record = MessageEnvelope.toRecord(topic, key, envelope)
 
     producer.send(record)
-  }
-
-  private def asKafkaHeaders(headers: Map[String, String]) = {
-    headers.map {
-      case (k: String, v: Any) => new RecordHeader(k, v.getBytes)
-    }
   }
 
   def shutDown(): Unit = {
