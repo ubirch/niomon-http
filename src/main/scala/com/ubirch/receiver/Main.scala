@@ -20,7 +20,7 @@ object Main {
 
   def main(args: Array[String]) {
 
-    val isCluster = Option(System.getProperty(DEPLOYMENT_MODE_ENV)).forall(!_.equalsIgnoreCase("local"))
+    val isCluster = sys.env.get(DEPLOYMENT_MODE_ENV).forall(!_.equalsIgnoreCase("local"))
     val config: Config = loadConfig(isCluster)
 
     implicit val system: ActorSystem = createActorSystem(config, isCluster)
