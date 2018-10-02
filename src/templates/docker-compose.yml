@@ -1,7 +1,7 @@
 version: '2'
 services:
   http-receiver-1:
-    image: ubirch/${project.artifactId}:v${project.version}.${build.number}
+    image: ubirch/${project.artifactId}:${build.number}
     depends_on:
     - kafka
     - zookeeper
@@ -17,13 +17,13 @@ services:
       AKKA_CLUSTER_NODE_NAME: "http-receiver-1"
       CLUSTER_SEED_NODES : "akka.tcp://http-receiver@http-receiver-1:2552,akka.tcp://http-receiver@http-receiver-2:2552"
   http-receiver-2:
-    image: ubirch/${project.artifactId}:v${project.version}.${build.number}
+    image: ubirch/${project.artifactId}:${build.number}
     depends_on:
     - kafka
     - zookeeper
     ports:
     - "8081:8080"
-    - "9010:9010"
+    - "9011:9010"
     - "2552"
     hostname: "http-receiver-2"
     environment:
