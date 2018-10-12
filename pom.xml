@@ -266,6 +266,7 @@
                   <filtering>true</filtering>
                   <includes>
                     <include>docker-compose.yml</include>
+                    <include>docker-compose.override.yml</include>
                   </includes>
                 </resource>
               </resources>
