@@ -6,7 +6,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.pattern.ask
 import akka.util.Timeout
 
-import scala.util.Success
+import scala.util.{Failure, Success}
 
 /**
   * Creates a HttpRequestHandler for each incoming RequestData from HTTP.
@@ -33,7 +33,7 @@ class Dispatcher(registry: ActorRef, handlerCreator: HttpRequestHandlerCreator) 
         case Success(Some(reqHandler: RequestHandlerReference)) =>
           log.debug(s"forwarding response with requestId [${resp.requestId}] to actor [${reqHandler.actorRef.toString()}]")
           reqHandler.actorRef ! resp
-        case _ => log.error(s"could not find actor for request ${resp.requestId}")
+        case Failure(e) => log.error(s"could not find actor for request ${resp.requestId}", e)
       }
   }
 }

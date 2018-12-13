@@ -41,8 +41,9 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
                     // ToDo BjB 21.09.18 : Revise Headers
                     val contentType = determineContentType(result.envelope.headers)
                     complete(HttpResponse(status = StatusCodes.Created, entity = HttpEntity(result.envelope.payload).withContentType(contentType)))
-                  case _ =>
-                    complete(HttpResponse(StatusCodes.InternalServerError))
+                  case Failure(e) =>
+                    log.debug("dispatcher failure", e)
+                    complete(StatusCodes.InternalServerError, e.getMessage)
                 }
             }
         }

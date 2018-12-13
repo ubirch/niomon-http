@@ -30,7 +30,7 @@
   </appender>
 
   <logger name="org.apache.kafka" level="INFO"/>
-  <logger name="com.ubirch" level="DEBUG" additivity="false"/>
+  <logger name="com.ubirch" level="DEBUG"/>
 
   <root level="INFO">
     <appender-ref ref="STDOUT"/>
