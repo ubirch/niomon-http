@@ -22,6 +22,8 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
     // when
     requestHandler ! requestData
 
+    Thread.sleep(100)
+
     // then
     verify(kafkaPublisher).send(eqTo(requestData.requestId), eqTo(requestData.envelope))
   }
