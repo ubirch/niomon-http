@@ -48,7 +48,7 @@
   <properties>
     <build.number>${timestamp}-dev</build.number>
     <kafka-support.version>1.0.0</kafka-support.version>
-    <skinny-framework.version>3.0.0</skinny-framework.version>
+    <skinny-framework.version>3.0.1</skinny-framework.version>
     <config.version>1.3.3</config.version>
   </properties>
 
@@ -135,7 +135,7 @@
     </dependency>
     <dependency>
       <groupId>org.skinny-framework</groupId>
-      <artifactId>skinny-http-client_2.12</artifactId>
+      <artifactId>skinny-http-client_${scala.major.version}</artifactId>
       <version>${skinny-framework.version}</version>
       <scope>test</scope>
     </dependency>
