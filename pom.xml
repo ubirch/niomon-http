@@ -247,33 +247,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- create a target/docker-compose.yml to start up locally -->
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>${maven-resources-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/templates</directory>
-                                    <filtering>true</filtering>
-                                    <includes>
-                                        <include>docker-compose.yml</include>
-                                        <include>docker-compose.override.yml</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <!-- create and/or push the created docker image -->
             <plugin>
                 <groupId>com.spotify</groupId>
