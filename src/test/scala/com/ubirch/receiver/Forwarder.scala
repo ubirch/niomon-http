@@ -20,6 +20,6 @@ import akka.actor.{Actor, ActorRef}
 
 class Forwarder(target: ActorRef) extends Actor {
   def receive: PartialFunction[Any, Unit] = {
-    case _ => target ! _
+    case msg: Any => target ! msg
   }
 }
