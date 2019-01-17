@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019 ubirch GmbH
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.ubirch.receiver.actors
 
 import java.util.concurrent.TimeUnit
@@ -21,10 +37,9 @@ object ClusterAwareRegistry {
   * Delegates to Registry and syncs with other cluster nodes via cluster PubSub.
   */
 class ClusterAwareRegistry(clusterPubSub: ActorRef, registry: ActorRef) extends Actor with ActorLogging {
-  implicit val timeout: Timeout = Timeout(100, TimeUnit.MILLISECONDS)
+  implicit val timeout: Timeout = Timeout(100, TimeUnit.MILLISECONDS) // scalastyle:off magic.number
 
   import context._
-
 
   override def preStart(): Unit = {
     clusterPubSub ! DistributedPubSubMediator.Subscribe(REQUESTS_TOPIC, self)

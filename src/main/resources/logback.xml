@@ -15,24 +15,24 @@
   -->
 
 <configuration debug="false">
-  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-    <target>System.out</target>
-    <encoder>
-      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%20.20logger{20}] %msg%n</pattern>
-    </encoder>
-  </appender>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.out</target>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%20.20logger{20}] %msg%n</pattern>
+        </encoder>
+    </appender>
 
-  <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
-    <target>System.err</target>
-    <encoder>
-      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%20.20logger{20}] %msg%n</pattern>
-    </encoder>
-  </appender>
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%20.20logger{20}] %msg%n</pattern>
+        </encoder>
+    </appender>
 
-  <logger name="org.apache.kafka" level="INFO"/>
-  <logger name="com.ubirch" level="DEBUG"/>
+    <logger name="org.apache.kafka" level="INFO"/>
+    <logger name="com.ubirch" level="DEBUG"/>
 
-  <root level="INFO">
-    <appender-ref ref="STDOUT"/>
-  </root>
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
 </configuration>
