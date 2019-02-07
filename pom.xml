@@ -54,9 +54,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>ubirch</groupId>
-            <artifactId>kafka-support</artifactId>
-            <version>${kafka-support.version}</version>
+            <groupId>com.ubirch.kafka</groupId>
+            <artifactId>ubirch-kafka-envelope</artifactId>
+            <version>1.0.0</version>
         </dependency>
 
         <!-- scala, logging etc. -->

@@ -23,7 +23,6 @@ import akka.actor.ActorRef
 import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.KafkaConsumer.Conf
 import com.typesafe.scalalogging.Logger
-import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver.actors.ResponseData
 import org.apache.kafka.clients.consumer.{ConsumerRecords, OffsetResetStrategy}
 import org.apache.kafka.common.errors.WakeupException
@@ -69,7 +68,7 @@ class KafkaListener(kafkaUrl: String, topic: String, dispatcher: ActorRef) exten
 
   private def deliver(rcds: ConsumerRecords[String, Array[Byte]]): Unit = {
     rcds.iterator().forEachRemaining(record => {
-      dispatcher ! ResponseData(record.key(), MessageEnvelope.fromRecord(record))
+      dispatcher ! ResponseData(record.key(), record)
     })
   }
 

@@ -18,8 +18,9 @@ package com.ubirch.receiver.kafka
 
 import cakesolutions.kafka.KafkaProducer
 import cakesolutions.kafka.KafkaProducer.Conf
-import com.ubirch.kafkasupport.MessageEnvelope
+import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
+import com.ubirch.kafka.RichAnyProducerRecord
 
 class KafkaPublisher(kafkaUrl: String, topic: String) {
 
@@ -31,8 +32,8 @@ class KafkaPublisher(kafkaUrl: String, topic: String) {
   )
 
 
-  def send(key: String, envelope: MessageEnvelope[Array[Byte]]): Unit = {
-    val record = MessageEnvelope.toRecord(topic, key, envelope)
+  def send(key: String, request: (Array[Byte], Map[String, String])): Unit = {
+    val record = new ProducerRecord(topic, null, key, request._1).withHeaders(request._2.toSeq: _*)
 
     producer.send(record)
   }

@@ -28,8 +28,8 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
-import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver.actors.{RequestData, ResponseData}
+import com.ubirch.kafka.RichAnyConsumerRecord
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
@@ -51,13 +51,13 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             entity(as[Array[Byte]]) {
               input =>
                 val requestId = UUID.randomUUID().toString
-                val responseData = dispatcher ? RequestData(requestId, MessageEnvelope(input, getHeaders(req)))
+                val responseData = dispatcher ? RequestData(requestId, (input, getHeaders(req)))
                 onComplete(responseData) {
                   case Success(res) =>
                     val result = res.asInstanceOf[ResponseData]
                     // ToDo BjB 21.09.18 : Revise Headers
-                    val contentType = determineContentType(result.envelope.headers)
-                    complete(HttpResponse(status = StatusCodes.Created, entity = HttpEntity(result.envelope.payload).withContentType(contentType)))
+                    val contentType = determineContentType(result.record.headersScala)
+                    complete(HttpResponse(status = StatusCodes.Created, entity = HttpEntity(result.record.value()).withContentType(contentType)))
                   case Failure(e) =>
                     log.debug("dispatcher failure", e)
                     complete(StatusCodes.InternalServerError, e.getMessage)

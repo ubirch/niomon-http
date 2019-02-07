@@ -17,8 +17,8 @@
 package com.ubirch.receiver.actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
-import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver.kafka.KafkaPublisher
+import org.apache.kafka.clients.consumer.ConsumerRecord
 
 /**
   * Each actor of this type serves one specific HTTP request.
@@ -42,6 +42,6 @@ class HttpRequestHandler(registry: ActorRef, requester: ActorRef, publisher: Kaf
   }
 }
 
-final case class RequestData(requestId: String, envelope: MessageEnvelope[Array[Byte]])
+final case class RequestData(requestId: String, record: (Array[Byte], Map[String, String]))
 
-final case class ResponseData(requestId: String, envelope: MessageEnvelope[Array[Byte]])
+final case class ResponseData(requestId: String, record: ConsumerRecord[String, Array[Byte]])

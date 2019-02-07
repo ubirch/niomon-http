@@ -18,8 +18,8 @@ package com.ubirch.receiver.actors
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.TestProbe
-import com.ubirch.kafkasupport.MessageEnvelope
 import com.ubirch.receiver.kafka.KafkaPublisher
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
@@ -33,7 +33,7 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
     //given
     val kafkaPublisher = mock[KafkaPublisher]
     val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], mock[ActorRef], mock[ActorRef], kafkaPublisher))
-    val requestData = RequestData("requestId", MessageEnvelope("value".getBytes, Map()))
+    val requestData = RequestData("requestId", ("value".getBytes, Map()))
 
     // when
     requestHandler ! requestData
@@ -41,14 +41,14 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
     Thread.sleep(100) // scalastyle:off magic.number
 
     // then
-    verify(kafkaPublisher).send(eqTo(requestData.requestId), eqTo(requestData.envelope))
+    verify(kafkaPublisher).send(eqTo(requestData.requestId), eqTo(requestData.record))
   }
 
   it should "forward response data to returnTo actor" in {
     //given
     val returnTo = TestProbe()
     val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], TestProbe().ref, returnTo.ref, mock[KafkaPublisher]))
-    val responseData = ResponseData("requestId", MessageEnvelope("value".getBytes, Map()))
+    val responseData = ResponseData("requestId", new ConsumerRecord("", 0, 0, "requestId", "value".getBytes))
 
     // when
     requestHandler ! responseData
@@ -61,7 +61,7 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
     //given
     val registry = TestProbe()
     val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], registry.ref, TestProbe().ref, mock[KafkaPublisher]))
-    val responseData = ResponseData("requestId", MessageEnvelope("value".getBytes, Map()))
+    val responseData = ResponseData("requestId", new ConsumerRecord("", 0, 0, "requestId", "value".getBytes))
 
     // when
     requestHandler ! responseData
