@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.Authorization
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.pattern.ask
@@ -56,8 +57,10 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
                   case Success(res) =>
                     val result = res.asInstanceOf[ResponseData]
                     // ToDo BjB 21.09.18 : Revise Headers
-                    val contentType = determineContentType(result.record.headersScala)
-                    complete(HttpResponse(status = StatusCodes.Created, entity = HttpEntity(result.record.value()).withContentType(contentType)))
+                    val headers = result.record.headersScala
+                    val contentType = determineContentType(headers)
+                    val status = headers.get("http-status-code").map(_.toInt: StatusCode).getOrElse(StatusCodes.OK)
+                    complete(HttpResponse(status = status, entity = HttpEntity(contentType, result.record.value())))
                   case Failure(e) =>
                     log.debug("dispatcher failure", e)
                     complete(StatusCodes.InternalServerError, e.getMessage)
@@ -86,7 +89,9 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
   }
 
   private def getHeaders(req: HttpRequest): Map[String, String] = {
-    Map(CONTENT_TYPE -> req.entity.contentType.mediaType.toString(),
-      "Request-URI" -> req.getUri().toString)
+    Map(
+      CONTENT_TYPE -> req.entity.contentType.mediaType.toString(),
+      "Request-URI" -> req.getUri().toString,
+    ) ++ req.header[Authorization].map(h => h.name -> h.value)
   }
 }
