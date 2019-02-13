@@ -91,7 +91,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
   private def getHeaders(req: HttpRequest): Map[String, String] = {
     Map(
       CONTENT_TYPE -> req.entity.contentType.mediaType.toString(),
-      "Request-URI" -> req.getUri().toString,
+      "Request-URI" -> req.getUri().toString
     ) ++ req.header[Authorization].map(h => h.name -> h.value)
   }
 }
