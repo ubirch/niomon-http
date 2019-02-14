@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.Authorization
+import akka.http.scaladsl.model.headers.{Authorization, Cookie, ModeledCustomHeader, ModeledCustomHeaderCompanion, `Content-Type`}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.pattern.ask
@@ -33,7 +33,7 @@ import com.ubirch.receiver.actors.{RequestData, ResponseData}
 import com.ubirch.kafka.RichAnyConsumerRecord
 
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 
 class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSystem) {
@@ -42,7 +42,6 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
   implicit val context: ExecutionContext = system.dispatcher
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS) // scalastyle:off magic.number
-  private val CONTENT_TYPE = "Content-Type"
 
   def serveHttp() {
     val route: Route = {
@@ -83,15 +82,35 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
 
   private def determineContentType(headers: Map[String, String]) = {
     ContentType.parse(headers.getOrElse(CONTENT_TYPE, "")) match {
-      case Left(x) => ContentTypes.`application/octet-stream`
+      case Left(_) => ContentTypes.`application/octet-stream`
       case Right(x) => x
     }
   }
 
+  final class `X-XSRF-TOKEN`(token: String) extends ModeledCustomHeader[`X-XSRF-TOKEN`] {
+    override def value(): String = token
+    override def renderInRequests(): Boolean = true
+    override def renderInResponses(): Boolean = true
+    override def companion: ModeledCustomHeaderCompanion[`X-XSRF-TOKEN`] = `X-XSRF-TOKEN`
+  }
+
+  object `X-XSRF-TOKEN` extends ModeledCustomHeaderCompanion[`X-XSRF-TOKEN`] {
+    override def name: String = "X-XSRF-TOKEN"
+    override def parse(value: String): Try[`X-XSRF-TOKEN`] = Try(new `X-XSRF-TOKEN`(value))
+  }
+
   private def getHeaders(req: HttpRequest): Map[String, String] = {
-    Map(
-      CONTENT_TYPE -> req.entity.contentType.mediaType.toString(),
-      "Request-URI" -> req.getUri().toString
-    ) ++ req.header[Authorization].map(h => h.name -> h.value)
+    val headersToPreserve = List(
+      req.header[`Content-Type`],
+
+      // for cumulocity basic auth
+      req.header[Authorization],
+
+      // for cumulocity oauth
+      req.header[`X-XSRF-TOKEN`],
+      req.header[Cookie].flatMap { c => c.cookies.find(_.name == "authorization").map(Cookie(_)) }
+    )
+
+    Map("Request-URI" -> req.uri.toString) ++ headersToPreserve.flatten.map(h => h.name -> h.value)
   }
 }
