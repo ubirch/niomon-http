@@ -81,7 +81,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
   }
 
   private def determineContentType(headers: Map[String, String]) = {
-    ContentType.parse(headers.getOrElse(CONTENT_TYPE, "")) match {
+    ContentType.parse(headers.getOrElse(`Content-Type`.name, "")) match {
       case Left(_) => ContentTypes.`application/octet-stream`
       case Right(x) => x
     }
@@ -101,6 +101,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
 
   private def getHeaders(req: HttpRequest): Map[String, String] = {
     val headersToPreserve = List(
+      // TODO: maybe allow setting an arbitrary list of headers in the config?
       req.header[`Content-Type`],
 
       // for cumulocity basic auth
