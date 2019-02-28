@@ -54,7 +54,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.ubirch.kafka</groupId>
+            <groupId>com.ubirch</groupId>
             <artifactId>ubirch-kafka-envelope</artifactId>
             <version>${ubirch-kafka-envelope.version}</version>
         </dependency>
