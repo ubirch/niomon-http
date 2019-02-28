@@ -34,7 +34,7 @@ class ClusterAwareRegistryTest extends FlatSpec with MockitoSugar with Matchers 
 
   behavior of "ClusterAwareRegistry"
 
-  it must "register itself to PublishSubscibe REQUESTS_TOPIC in cluster at startup" in {
+  it must "register itself to PublishSubscribe REQUESTS_TOPIC in cluster at startup" in {
     // given
     val clusterPubSub = TestProbe()
 

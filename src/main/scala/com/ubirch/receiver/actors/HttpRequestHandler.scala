@@ -16,9 +16,12 @@
 
 package com.ubirch.receiver.actors
 
+import akka.actor.Status.Failure
 import akka.actor.{Actor, ActorLogging, ActorRef}
-import com.ubirch.receiver.kafka.KafkaPublisher
+import akka.pattern.pipe
+import com.ubirch.receiver.kafka.{KafkaPublisher, PublisherException, PublisherSuccess}
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.clients.producer.RecordMetadata
 
 /**
   * Each actor of this type serves one specific HTTP request.
@@ -26,15 +29,23 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
   * When the responseData arrives from kafka it is send to the original requester
   */
 class HttpRequestHandler(registry: ActorRef, requester: ActorRef, publisher: KafkaPublisher) extends Actor with ActorLogging {
+  import context.dispatcher
 
   def receive: Receive = {
-    case RequestData(k, e) =>
+    case RequestData(k, p, h) =>
       log.debug(s"received input with requestId [$k]")
-      publisher.send(key = k, e)
+      publisher.send(k, p, h) pipeTo self
     case response: ResponseData =>
       log.debug(s"received response with requestId [${response.requestId}]")
       requester ! response
       registry ! UnregisterRequestHandler(response.requestId)
+
+    case f@Failure(PublisherException(cause, requestId)) =>
+      log.error(cause, s"publisher failed for requestId [$requestId]")
+      requester ! f
+      registry ! UnregisterRequestHandler(requestId)
+    case PublisherSuccess(_: RecordMetadata, requestId: String) =>
+      log.debug(s"request with requestId [$requestId] published successfully")
   }
 
   override def postStop(): Unit = {
@@ -42,6 +53,6 @@ class HttpRequestHandler(registry: ActorRef, requester: ActorRef, publisher: Kaf
   }
 }
 
-final case class RequestData(requestId: String, record: (Array[Byte], Map[String, String]))
+final case class RequestData(requestId: String, payload: Array[Byte], headers: Map[String, String])
 
 final case class ResponseData(requestId: String, record: ConsumerRecord[String, Array[Byte]])

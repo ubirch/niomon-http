@@ -18,9 +18,11 @@ package com.ubirch.receiver.kafka
 
 import cakesolutions.kafka.KafkaProducer
 import cakesolutions.kafka.KafkaProducer.Conf
-import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.clients.producer.{ProducerRecord, RecordMetadata}
 import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 import com.ubirch.kafka.RichAnyProducerRecord
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class KafkaPublisher(kafkaUrl: String, topic: String) {
 
@@ -31,14 +33,18 @@ class KafkaPublisher(kafkaUrl: String, topic: String) {
       acks = "all")
   )
 
+  def send(key: String, payload: Array[Byte], headers: Map[String, String])(implicit ec: ExecutionContext): Future[PublisherSuccess] = {
+    val record = new ProducerRecord(topic, null, key, payload).withHeaders(headers.toSeq: _*)
 
-  def send(key: String, request: (Array[Byte], Map[String, String])): Unit = {
-    val record = new ProducerRecord(topic, null, key, request._1).withHeaders(request._2.toSeq: _*)
-
-    producer.send(record)
+    producer.send(record).transform(PublisherSuccess(_, key), PublisherException(_, key))
   }
 
   def shutDown(): Unit = {
     producer.close()
   }
 }
+
+final case class PublisherException(cause: Throwable, requestId: String)
+  extends Exception("kafka publisher exception", cause)
+
+final case class PublisherSuccess(recordMetadata: RecordMetadata, requestId: String)

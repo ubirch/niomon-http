@@ -16,16 +16,22 @@
 
 package com.ubirch.receiver.actors
 
+import akka.actor.Status.Failure
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.TestProbe
-import com.ubirch.receiver.kafka.KafkaPublisher
+import com.ubirch.receiver.kafka.{KafkaPublisher, PublisherException, PublisherSuccess}
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
-class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMatchersSugar with BeforeAndAfterAll {
+import scala.concurrent.Future
+
+class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMatchersSugar with BeforeAndAfterAll with Matchers {
 
   private implicit val system: ActorSystem = ActorSystem("HttpRequestHandlerTest")
+  import system.dispatcher
 
   behavior of "HttpRequestHandler"
 
@@ -33,7 +39,7 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
     //given
     val kafkaPublisher = mock[KafkaPublisher]
     val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], mock[ActorRef], mock[ActorRef], kafkaPublisher))
-    val requestData = RequestData("requestId", ("value".getBytes, Map()))
+    val requestData = RequestData("requestId", "value".getBytes, Map())
 
     // when
     requestHandler ! requestData
@@ -41,7 +47,7 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
     Thread.sleep(100) // scalastyle:off magic.number
 
     // then
-    verify(kafkaPublisher).send(eqTo(requestData.requestId), eqTo(requestData.record))
+    verify(kafkaPublisher).send(eqTo(requestData.requestId), eqTo(requestData.payload), eqTo(requestData.headers))(eqTo(dispatcher))
   }
 
   it should "forward response data to returnTo actor" in {
@@ -68,6 +74,26 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
 
     // then
     registry.expectMsg(UnregisterRequestHandler(responseData.requestId))
+  }
+
+  it should "handle publisher errors" in {
+    //given
+    val returnTo = TestProbe()
+    val expectedException = new RuntimeException("a wild publisher exception!")
+    val kafkaPublisher = mock[KafkaPublisher](new Answer[Future[PublisherSuccess]] {
+      override def answer(invocation: InvocationOnMock): Future[PublisherSuccess] =
+        Future.failed(PublisherException(expectedException, invocation.getArgument(0)))
+    })
+    val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], TestProbe().ref, returnTo.ref, kafkaPublisher))
+    val request = RequestData("requestId", Array(0, 1, 2), Map())
+
+    //when
+    requestHandler ! request
+
+    //then
+    val f = returnTo.expectMsgClass(classOf[Failure])
+    f.cause shouldBe a [PublisherException]
+    f.cause.asInstanceOf[PublisherException].cause should equal (expectedException)
   }
 
   override protected def afterAll(): Unit = system.terminate()

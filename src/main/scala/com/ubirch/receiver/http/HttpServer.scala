@@ -51,7 +51,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             entity(as[Array[Byte]]) {
               input =>
                 val requestId = UUID.randomUUID().toString
-                val responseData = dispatcher ? RequestData(requestId, (input, getHeaders(req)))
+                val responseData = dispatcher ? RequestData(requestId, input, getHeaders(req))
                 onComplete(responseData) {
                   case Success(res) =>
                     val result = res.asInstanceOf[ResponseData]
