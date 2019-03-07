@@ -31,10 +31,10 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
 import com.ubirch.receiver.actors.{RequestData, ResponseData}
 import com.ubirch.kafka.RichAnyConsumerRecord
+import HttpServer._
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
-
 
 class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSystem) {
 
@@ -87,6 +87,28 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
     }
   }
 
+  private def getHeaders(req: HttpRequest): Map[String, String] = {
+    val headersToPreserve = List(
+      // TODO: maybe allow setting an arbitrary list of headers in the config?
+      req.header[`Content-Type`],
+
+      // for cumulocity basic auth
+      req.header[Authorization],
+
+      // for cumulocity oauth
+      req.header[`X-XSRF-TOKEN`],
+      req.header[Cookie].flatMap { c => c.cookies.find(_.name == "authorization").map(Cookie(_)) },
+
+      // for customizing target cumulocity instance
+      req.header[`X-Cumulocity-BaseUrl`],
+      req.header[`X-Cumulocity-Tenant`]
+    )
+
+    Map("Request-URI" -> req.uri.toString) ++ headersToPreserve.flatten.map(h => h.name -> h.value)
+  }
+}
+
+object HttpServer {
   final class `X-XSRF-TOKEN`(token: String) extends ModeledCustomHeader[`X-XSRF-TOKEN`] {
     override def value(): String = token
     override def renderInRequests(): Boolean = true
@@ -99,19 +121,27 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
     override def parse(value: String): Try[`X-XSRF-TOKEN`] = Try(new `X-XSRF-TOKEN`(value))
   }
 
-  private def getHeaders(req: HttpRequest): Map[String, String] = {
-    val headersToPreserve = List(
-      // TODO: maybe allow setting an arbitrary list of headers in the config?
-      req.header[`Content-Type`],
+  final class `X-Cumulocity-BaseUrl`(baseUrl: String) extends ModeledCustomHeader[`X-Cumulocity-BaseUrl`] {
+    override def value(): String = baseUrl
+    override def renderInRequests(): Boolean = true
+    override def renderInResponses(): Boolean = true
+    override def companion: ModeledCustomHeaderCompanion[`X-Cumulocity-BaseUrl`] = `X-Cumulocity-BaseUrl`
+  }
 
-      // for cumulocity basic auth
-      req.header[Authorization],
+  object `X-Cumulocity-BaseUrl` extends ModeledCustomHeaderCompanion[`X-Cumulocity-BaseUrl`] {
+    override def name: String = "X-Cumulocity-BaseUrl"
+    override def parse(value: String): Try[`X-Cumulocity-BaseUrl`] = Try(new `X-Cumulocity-BaseUrl`(value))
+  }
 
-      // for cumulocity oauth
-      req.header[`X-XSRF-TOKEN`],
-      req.header[Cookie].flatMap { c => c.cookies.find(_.name == "authorization").map(Cookie(_)) }
-    )
+  final class `X-Cumulocity-Tenant`(tenant: String) extends ModeledCustomHeader[`X-Cumulocity-Tenant`] {
+    override def value(): String = tenant
+    override def renderInRequests(): Boolean = true
+    override def renderInResponses(): Boolean = true
+    override def companion: ModeledCustomHeaderCompanion[`X-Cumulocity-Tenant`] = `X-Cumulocity-Tenant`
+  }
 
-    Map("Request-URI" -> req.uri.toString) ++ headersToPreserve.flatten.map(h => h.name -> h.value)
+  object `X-Cumulocity-Tenant` extends ModeledCustomHeaderCompanion[`X-Cumulocity-Tenant`] {
+    override def name: String = "X-Cumulocity-Tenant"
+    override def parse(value: String): Try[`X-Cumulocity-Tenant`] = Try(new `X-Cumulocity-Tenant`(value))
   }
 }
