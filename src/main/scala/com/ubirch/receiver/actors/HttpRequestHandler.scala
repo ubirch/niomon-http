@@ -43,8 +43,12 @@ class HttpRequestHandler(registry: ActorRef, requester: ActorRef, publisher: Kaf
       requester ! response
       val time = System.currentTimeMillis() - startMillis
       log.info(s"Took $time ms to respond to [${response.requestId}]")
-      if (time > 500) {
+      if (time > 500 && time < 10000) {
         log.warning(s"Processing took more than half a second for request with id [${response.requestId}]!")
+      }
+      if (time >= 10000) {
+        log.error(s"Processing took more than 10 seconds for request with id [${response.requestId}]. " +
+          "Requesting client most likely timed out!")
       }
       registry ! UnregisterRequestHandler(response.requestId)
 
