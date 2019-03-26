@@ -40,6 +40,8 @@
     <logger name="org.svenson" level="WARN"/>
     <logger name="org.apache.commons" level="WARN"/>
     <logger name="httpclient.wire" level="WARN"/>
+    <logger name="org.redisson" level="WARN"/>
+    <logger name="io.netty" level="WARN"/>
 
     <root level="DEBUG">
         <appender-ref ref="JSONSTDOUT"/>

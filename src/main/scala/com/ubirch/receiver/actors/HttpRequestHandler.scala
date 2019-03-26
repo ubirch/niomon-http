@@ -31,13 +31,21 @@ import org.apache.kafka.clients.producer.RecordMetadata
 class HttpRequestHandler(registry: ActorRef, requester: ActorRef, publisher: KafkaPublisher) extends Actor with ActorLogging {
   import context.dispatcher
 
+  var startMillis = 0L
+
   def receive: Receive = {
     case RequestData(k, p, h) =>
       log.debug(s"received input with requestId [$k]")
       publisher.send(k, p, h) pipeTo self
+      startMillis = System.currentTimeMillis()
     case response: ResponseData =>
       log.debug(s"received response with requestId [${response.requestId}]")
       requester ! response
+      val time = System.currentTimeMillis() - startMillis
+      log.info(s"Took $time ms to respond to [${response.requestId}]")
+      if (time > 500) {
+        log.warning(s"Processing took more than half a second for request with id [${response.requestId}]!")
+      }
       registry ! UnregisterRequestHandler(response.requestId)
 
     case f@Failure(PublisherException(cause, requestId)) =>
