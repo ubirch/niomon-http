@@ -41,7 +41,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
   val log: Logger = Logger[HttpServer]
   implicit val context: ExecutionContext = system.dispatcher
   implicit val materializer: ActorMaterializer = ActorMaterializer()
-  implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS) // scalastyle:off magic.number
+  implicit val timeout: Timeout = Timeout(30, TimeUnit.SECONDS) // scalastyle:off magic.number
 
   def serveHttp() {
     val route: Route = {
