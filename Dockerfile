@@ -1,5 +1,6 @@
 FROM ubirch/java
-ARG JAR_LIBS
+ARG THIRD_PARTY_LIB
+ARG PROJECT_LIB
 ARG JAR_FILE
 ARG VERSION
 ARG BUILD
@@ -32,7 +33,10 @@ ENTRYPOINT [ \
 ]
 
 # Add Maven dependencies (not shaded into the artifact; Docker-cached)
-COPY ${JAR_LIBS} /usr/share/service/lib
+# To improve cache usage this is split into two steps - third-party libs and libs from the project
+COPY ${THIRD_PARTY_LIB} /usr/share/service/lib/
+COPY ${PROJECT_LIB} /usr/share/service/lib/
+
 # Add the service itself
 COPY ${JAR_FILE} /usr/share/service/main.jar
 LABEL "com.ubirch.build"="${BUILD}"
