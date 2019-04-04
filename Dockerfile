@@ -35,7 +35,8 @@ ENTRYPOINT [ \
 # Add Maven dependencies (not shaded into the artifact; Docker-cached)
 # To improve cache usage this is split into two steps - third-party libs and libs from the project
 COPY ${THIRD_PARTY_LIB} /usr/share/service/lib/
-COPY ${PROJECT_LIB} /usr/share/service/lib/
+# NOTE: uncomment the line below when http-receiver gets some project libs
+# COPY ${PROJECT_LIB} /usr/share/service/lib/
 
 # Add the service itself
 COPY ${JAR_FILE} /usr/share/service/main.jar
