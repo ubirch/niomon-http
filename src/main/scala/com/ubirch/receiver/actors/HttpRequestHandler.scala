@@ -41,15 +41,7 @@ class HttpRequestHandler(registry: ActorRef, requester: ActorRef, publisher: Kaf
     case response: ResponseData =>
       log.debug(s"received response with requestId [${response.requestId}]")
       requester ! response
-      val time = System.currentTimeMillis() - startMillis
-      log.info(s"Took $time ms to respond to [${response.requestId}]")
-      if (time > 500 && time < 10000) {
-        log.warning(s"Processing took more than half a second for request with id [${response.requestId}]!")
-      }
-      if (time >= 10000) {
-        log.error(s"Processing took more than 10 seconds for request with id [${response.requestId}]. " +
-          "Requesting client most likely timed out!")
-      }
+      logRequestResponseTime(response)
       registry ! UnregisterRequestHandler(response.requestId)
 
     case f@Failure(PublisherException(cause, requestId)) =>
@@ -58,6 +50,18 @@ class HttpRequestHandler(registry: ActorRef, requester: ActorRef, publisher: Kaf
       registry ! UnregisterRequestHandler(requestId)
     case PublisherSuccess(_: RecordMetadata, requestId: String) =>
       log.debug(s"request with requestId [$requestId] published successfully")
+  }
+
+  private def logRequestResponseTime(response: ResponseData): Unit = {
+    val time = System.currentTimeMillis() - startMillis
+    log.info(s"Took $time ms to respond to [${response.requestId}]")
+    if (time > 500 && time < 10000) {
+      log.warning(s"Processing took more than half a second for request with id [${response.requestId}]!")
+    }
+    if (time >= 10000) {
+      log.error(s"Processing took more than 10 seconds for request with id [${response.requestId}]. " +
+        "Requesting client most likely timed out!")
+    }
   }
 
   override def postStop(): Unit = {
