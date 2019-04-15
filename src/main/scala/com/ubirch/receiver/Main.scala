@@ -25,6 +25,7 @@ import com.ubirch.receiver.http.HttpServer
 import com.ubirch.receiver.kafka.{KafkaListener, KafkaPublisher}
 
 import scala.concurrent.ExecutionContextExecutor
+import scala.collection.JavaConverters._
 
 object Main {
   val DEPLOYMENT_MODE_ENV = "DEPLOYMENT_MODE"
@@ -46,7 +47,7 @@ object Main {
     val kafkaUrl: String = config.getString(KAFKA_URL_PROPERTY)
     val publisher = new KafkaPublisher(kafkaUrl, config.getString(Main.KAFKA_TOPIC_INCOMING_PROPERTY))
     val dispatcher: ActorRef = system.actorOf(Props(classOf[Dispatcher], registry, actors.requestHandlerCreator(publisher)), "dispatcher")
-    val listener = new KafkaListener(kafkaUrl, config.getString(KAFKA_TOPIC_OUTGOING_PROPERTY), dispatcher)
+    val listener = new KafkaListener(kafkaUrl, config.getStringList(KAFKA_TOPIC_OUTGOING_PROPERTY).asScala, dispatcher)
 
     listener.startPolling()
     new HttpServer(config.getInt(HTTP_PORT_PROPERTY), dispatcher).serveHttp()

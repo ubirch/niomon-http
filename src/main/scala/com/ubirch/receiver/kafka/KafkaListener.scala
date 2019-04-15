@@ -31,7 +31,7 @@ import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeser
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
-class KafkaListener(kafkaUrl: String, topic: String, dispatcher: ActorRef) extends Runnable {
+class KafkaListener(kafkaUrl: String, topics: Seq[String], dispatcher: ActorRef) extends Runnable {
 
   val log: Logger = Logger[KafkaListener]
   val consumer = KafkaConsumer(
@@ -58,7 +58,7 @@ class KafkaListener(kafkaUrl: String, topic: String, dispatcher: ActorRef) exten
   }
 
   def subscribe(): KafkaListener = {
-    consumer.subscribe(List(topic).asJavaCollection)
+    consumer.subscribe(topics.asJavaCollection)
     this
   }
 
