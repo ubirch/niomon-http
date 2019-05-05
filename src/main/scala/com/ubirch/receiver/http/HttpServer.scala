@@ -46,7 +46,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
   def serveHttp() {
     val route: Route = {
       post {
-        path("") {
+        path("/") {
           extractRequest {
             req =>
               entity(as[Array[Byte]]) {
