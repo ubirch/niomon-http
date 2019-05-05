@@ -42,8 +42,9 @@
     <logger name="httpclient.wire" level="WARN"/>
     <logger name="org.redisson" level="WARN"/>
     <logger name="io.netty" level="WARN"/>
+    <logger name="com.ubirch" level="DEBUG"/>s
 
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="JSONSTDOUT"/>
     </root>
 </configuration>

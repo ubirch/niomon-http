@@ -22,16 +22,16 @@ import java.util.concurrent.TimeUnit
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{Authorization, Cookie, ModeledCustomHeader, ModeledCustomHeaderCompanion, `Content-Type`}
+import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
-import com.ubirch.receiver.actors.{RequestData, ResponseData}
 import com.ubirch.kafka.RichAnyConsumerRecord
-import HttpServer._
+import com.ubirch.receiver.actors.{RequestData, ResponseData}
+import com.ubirch.receiver.http.HttpServer._
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
@@ -45,30 +45,35 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
 
   def serveHttp() {
     val route: Route = {
-      path("") {
-        extractRequest {
-          req =>
-            entity(as[Array[Byte]]) {
-              input =>
-                val requestId = UUID.randomUUID().toString
-                val responseData = dispatcher ? RequestData(requestId, input, getHeaders(req))
-                onComplete(responseData) {
-                  case Success(res) =>
-                    val result = res.asInstanceOf[ResponseData]
-                    // ToDo BjB 21.09.18 : Revise Headers
-                    val headers = result.record.headersScala
-                    val contentType = determineContentType(headers)
-                    val status = headers.get("http-status-code").map(_.toInt: StatusCode).getOrElse(StatusCodes.OK)
-                    complete(HttpResponse(status = status, entity = HttpEntity(contentType, result.record.value())))
-                  case Failure(e) =>
-                    log.debug("dispatcher failure", e)
-                    complete(StatusCodes.InternalServerError, e.getMessage)
-                }
-            }
+      post {
+        path("") {
+          extractRequest {
+            req =>
+              entity(as[Array[Byte]]) {
+                input =>
+                  val requestId = UUID.randomUUID().toString
+                  log.debug(s"HTTP request-id $requestId")
+                  val responseData = dispatcher ? RequestData(requestId, input, getHeaders(req))
+                  onComplete(responseData) {
+                    case Success(res) =>
+                      val result = res.asInstanceOf[ResponseData]
+                      // ToDo BjB 21.09.18 : Revise Headers
+                      val headers = result.record.headersScala
+                      val contentType = determineContentType(headers)
+                      val status = headers.get("http-status-code").map(_.toInt: StatusCode).getOrElse(StatusCodes.OK)
+                      complete(HttpResponse(status = status, entity = HttpEntity(contentType, result.record.value())))
+                    case Failure(e) =>
+                      log.debug("dispatcher failure", e)
+                      complete(StatusCodes.InternalServerError, e.getMessage)
+                  }
+              }
+          }
         }
       } ~
-        path("status") {
-          complete("up")
+        get {
+          path("status") {
+            complete("up")
+          }
         }
     }
 
