@@ -35,6 +35,8 @@
         </encoder>
     </appender>
 
+    <logger name="com.ubirch" level="DEBUG"/>
+
     <logger name="org.apache.kafka" level="WARN"/>
     <logger name="akka.actor.TimerScheduler" level="WARN"/>
     <logger name="org.svenson" level="WARN"/>
@@ -42,7 +44,6 @@
     <logger name="httpclient.wire" level="WARN"/>
     <logger name="org.redisson" level="WARN"/>
     <logger name="io.netty" level="WARN"/>
-    <logger name="com.ubirch" level="DEBUG"/>s
 
     <root level="INFO">
         <appender-ref ref="JSONSTDOUT"/>
