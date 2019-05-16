@@ -53,7 +53,10 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
                 input =>
                   val requestId = UUID.randomUUID().toString
                   log.debug(s"HTTP request-id $requestId")
-                  val responseData = dispatcher ? RequestData(requestId, input, getHeaders(req))
+                  val headers = getHeaders(req)
+                  log.debug(s"all HTTP headers: [${req.headers}]")
+                  log.debug(s"HTTP headers to forward to kafka: [$headers]")
+                  val responseData = dispatcher ? RequestData(requestId, input, headers)
                   onComplete(responseData) {
                     case Success(res) =>
                       val result = res.asInstanceOf[ResponseData]
@@ -93,26 +96,16 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
   }
 
   private def getHeaders(req: HttpRequest): Map[String, String] = {
-    val headersToPreserve = List(
-      // TODO: maybe allow setting an arbitrary list of headers in the config?
-      req.header[`Content-Type`],
+    val headersToPreserve = req.headers.filter(h =>
+      h.name() == "Content-Type" ||
+      h.name() == "Authorization" ||
+      h.name() == "X-XSRF-TOKEN" ||
+      h.name() == "X-Cumulocity-BaseUrl" ||
+      h.name() == "X-Cumulocity-Tenant" ||
+      h.name() == "X-Niomon-Purge-Caches"
+    ) ++ req.header[Cookie].flatMap { c => c.cookies.find(_.name == "authorization").map(Cookie(_)) }
 
-      // for cumulocity basic auth
-      req.header[Authorization],
-
-      // for cumulocity oauth
-      req.header[`X-XSRF-TOKEN`],
-      req.header[Cookie].flatMap { c => c.cookies.find(_.name == "authorization").map(Cookie(_)) },
-
-      // for customizing target cumulocity instance
-      req.header[`X-Cumulocity-BaseUrl`],
-      req.header[`X-Cumulocity-Tenant`],
-
-      // for cache purging
-      req.header[`X-Niomon-Purge-Caches`]
-    )
-
-    Map("Request-URI" -> req.uri.toString) ++ headersToPreserve.flatten.map(h => h.name -> h.value)
+    Map("Request-URI" -> req.uri.toString) ++ headersToPreserve.map(h => h.name -> h.value)
   }
 }
 
