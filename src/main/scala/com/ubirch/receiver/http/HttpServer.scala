@@ -106,7 +106,10 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
 
       // for customizing target cumulocity instance
       req.header[`X-Cumulocity-BaseUrl`],
-      req.header[`X-Cumulocity-Tenant`]
+      req.header[`X-Cumulocity-Tenant`],
+
+      // for cache purging
+      req.header[`X-Niomon-Purge-Caches`]
     )
 
     Map("Request-URI" -> req.uri.toString) ++ headersToPreserve.flatten.map(h => h.name -> h.value)
@@ -119,6 +122,18 @@ object HttpServer {
     override def renderInRequests(): Boolean = true
     override def renderInResponses(): Boolean = true
     override def companion: ModeledCustomHeaderCompanion[`X-XSRF-TOKEN`] = `X-XSRF-TOKEN`
+  }
+
+  final class `X-Niomon-Purge-Caches`(inner: String) extends ModeledCustomHeader[`X-Niomon-Purge-Caches`] {
+    override def companion: ModeledCustomHeaderCompanion[`X-Niomon-Purge-Caches`] = `X-Niomon-Purge-Caches`
+    override def value(): String = inner
+    override def renderInRequests(): Boolean = true
+    override def renderInResponses(): Boolean = true
+  }
+
+  object `X-Niomon-Purge-Caches` extends ModeledCustomHeaderCompanion[`X-Niomon-Purge-Caches`] {
+    override def name: String = "X-Niomon-Purge-Caches"
+    override def parse(value: String): Try[`X-Niomon-Purge-Caches`] = Try(new `X-Niomon-Purge-Caches`(value))
   }
 
   object `X-XSRF-TOKEN` extends ModeledCustomHeaderCompanion[`X-XSRF-TOKEN`] {
