@@ -36,8 +36,6 @@ class Dispatcher(registry: ActorRef, handlerCreator: HttpRequestHandlerCreator) 
   override def receive: Receive = {
     case req: RequestData =>
       log.debug(s"received RequestData with requestId [${req.requestId}]")
-      implicit val timeout: Timeout = Timeout(10, TimeUnit.SECONDS) // scalastyle:off magic.number
-
       val reqHandler = handlerCreator(context, registry, sender(), req.requestId)
       registry ! RegisterRequestHandler(RequestHandlerReference(req.requestId, reqHandler))
       reqHandler ! req

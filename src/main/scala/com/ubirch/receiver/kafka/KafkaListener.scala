@@ -74,7 +74,7 @@ class KafkaListener(kafkaUrl: String, topics: Seq[String], dispatcher: ActorRef)
 
   private def handleError(ex: Throwable): Unit = {
     ex match {
-      case e: WakeupException => if (running.get()) consumer.close()
+      case _: WakeupException => if (running.get()) consumer.close()
       case e: Exception => log.error("error polling records", e) // ToDo BjB 17.09.18 : errorhandling
     }
   }

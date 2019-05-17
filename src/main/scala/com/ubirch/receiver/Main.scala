@@ -24,9 +24,6 @@ import com.ubirch.receiver.actors.{ClusterAwareRegistry, ClusterListener, Dispat
 import com.ubirch.receiver.http.HttpServer
 import com.ubirch.receiver.kafka.{KafkaListener, KafkaPublisher}
 
-import scala.concurrent.ExecutionContextExecutor
-import scala.collection.JavaConverters._
-
 object Main {
   val DEPLOYMENT_MODE_ENV = "DEPLOYMENT_MODE"
 
@@ -35,13 +32,12 @@ object Main {
   val KAFKA_TOPIC_OUTGOING_PROPERTY = "kafka.topic.outgoing"
   val HTTP_PORT_PROPERTY = "http.port"
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit = {
 
     val isCluster = sys.env.get(DEPLOYMENT_MODE_ENV).forall(!_.equalsIgnoreCase("local"))
     val config: Config = loadConfig(isCluster)
 
     implicit val system: ActorSystem = createActorSystem(config, isCluster)
-    implicit val executionContext: ExecutionContextExecutor = system.dispatcher
     val registry: ActorRef = createRegistry(system, isCluster)
 
     val kafkaUrl: String = config.getString(KAFKA_URL_PROPERTY)

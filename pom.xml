@@ -69,11 +69,6 @@
             <artifactId>scala-logging_${scala.major.version}</artifactId>
             <version>${scala-logging.version}</version>
         </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback-classic.version}</version>
-        </dependency>
 
         <!-- akka -->
         <dependency>
@@ -127,12 +122,6 @@
 
         <!-- test dependencies -->
         <dependency>
-            <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_${scala.major.version}</artifactId>
-            <version>${scalatest.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.skinny-framework</groupId>
             <artifactId>skinny-http-client_${scala.major.version}</artifactId>
             <version>${skinny-framework.version}</version>
@@ -158,18 +147,6 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>${scala-maven-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <recompileMode>incremental</recompileMode>
-                </configuration>
             </plugin>
             <!-- disable surefire -->
             <plugin>

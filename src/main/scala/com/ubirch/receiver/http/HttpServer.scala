@@ -31,7 +31,6 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
 import com.ubirch.kafka.RichAnyConsumerRecord
 import com.ubirch.receiver.actors.{RequestData, ResponseData}
-import com.ubirch.receiver.http.HttpServer._
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
@@ -43,7 +42,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val timeout: Timeout = Timeout(30, TimeUnit.SECONDS) // scalastyle:off magic.number
 
-  def serveHttp() {
+  def serveHttp(): Unit = {
     val route: Route = {
       post {
         pathEndOrSingleSlash {
@@ -67,7 +66,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
                       complete(HttpResponse(status = status, entity = HttpEntity(contentType, result.record.value())))
                     case Failure(e) =>
                       log.debug("dispatcher failure", e)
-                      complete(StatusCodes.InternalServerError, e.getMessage)
+                      complete((StatusCodes.InternalServerError, e.getMessage))
                   }
               }
           }
