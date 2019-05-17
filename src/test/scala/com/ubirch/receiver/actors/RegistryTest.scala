@@ -16,16 +16,12 @@
 
 package com.ubirch.receiver.actors
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.TestProbe
-import akka.util.Timeout
 import org.scalatest.{FlatSpec, Matchers}
 
 class RegistryTest extends FlatSpec with Matchers {
   private implicit val system: ActorSystem = ActorSystem("RegistryTest")
-  private implicit val timeout: Timeout = Timeout(1, TimeUnit.SECONDS)
 
   private val handler = TestProbe().ref
 

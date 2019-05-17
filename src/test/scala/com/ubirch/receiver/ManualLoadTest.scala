@@ -33,7 +33,7 @@ import scala.concurrent.{Await, ExecutionContext}
 object ManualLoadTest {
 
   // scalastyle:off regex
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit = {
 
     val numberOfRequests = 1000
 
@@ -53,7 +53,7 @@ object ManualLoadTest {
       })
       .map(f => ResponseAndInput(Await.result(f._1, Duration(20, "seconds")), f._2)) // scalastyle:off magic.number
 
-    val elapsedMs: Double = System.currentTimeMillis() - start
+    val elapsedMs: Double = (System.currentTimeMillis() - start).toDouble
     val msPerReq: Double = elapsedMs / numberOfRequests
 
     println(s"processing $numberOfRequests requests took ${elapsedMs}ms which is about ${msPerReq}ms/req or ${1000 / msPerReq}req/s")

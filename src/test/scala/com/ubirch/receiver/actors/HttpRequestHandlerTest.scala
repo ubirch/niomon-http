@@ -31,6 +31,7 @@ import scala.concurrent.Future
 class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMatchersSugar with BeforeAndAfterAll with Matchers {
 
   private implicit val system: ActorSystem = ActorSystem("HttpRequestHandlerTest")
+
   import system.dispatcher
 
   behavior of "HttpRequestHandler"
@@ -82,7 +83,7 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
     val expectedException = new RuntimeException("a wild publisher exception!")
     val kafkaPublisher = mock[KafkaPublisher](new Answer[Future[PublisherSuccess]] {
       override def answer(invocation: InvocationOnMock): Future[PublisherSuccess] =
-        Future.failed(PublisherException(expectedException, invocation.getArgument(0)))
+        Future.failed(PublisherException(expectedException, invocation.getArgument[String](0)))
     })
     val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], TestProbe().ref, returnTo.ref, kafkaPublisher))
     val request = RequestData("requestId", Array(0, 1, 2), Map())
@@ -92,9 +93,11 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
 
     //then
     val f = returnTo.expectMsgClass(classOf[Failure])
-    f.cause shouldBe a [PublisherException]
-    f.cause.asInstanceOf[PublisherException].cause should equal (expectedException)
+    f.cause shouldBe a[PublisherException]
+    f.cause.asInstanceOf[PublisherException].cause should equal(expectedException)
   }
 
-  override protected def afterAll(): Unit = system.terminate()
+  override protected def afterAll(): Unit = {
+    val _ = system.terminate()
+  }
 }

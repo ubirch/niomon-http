@@ -16,19 +16,15 @@
 
 package com.ubirch.receiver.actors
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorSystem, Props}
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import akka.testkit.TestProbe
-import akka.util.Timeout
 import com.ubirch.receiver.actors.ClusterAwareRegistry.REQUESTS_TOPIC
 import org.scalatest.mockito.MockitoSugar
 import org.scalatest.{FlatSpec, Matchers}
 
 class ClusterAwareRegistryTest extends FlatSpec with MockitoSugar with Matchers {
   private implicit val system: ActorSystem = ActorSystem("ClusterAwareRegistry")
-  private implicit val timeout: Timeout = Timeout(1, TimeUnit.SECONDS)
 
   private val handler = TestProbe().ref
 

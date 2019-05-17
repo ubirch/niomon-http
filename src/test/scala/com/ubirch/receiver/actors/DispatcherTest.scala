@@ -63,5 +63,7 @@ class DispatcherTest extends FlatSpec with MockitoSugar with ArgumentMatchersSug
     someRequestHandler.expectMsg(responseData)
   }
 
-  override protected def afterAll(): Unit = system.terminate()
+  override protected def afterAll(): Unit = {
+    val _ = system.terminate()
+  }
 }
