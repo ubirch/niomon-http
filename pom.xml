@@ -46,7 +46,6 @@
     </organization>
 
     <properties>
-        <build.number>${timestamp}-dev</build.number>
         <skinny-framework.version>3.0.1</skinny-framework.version>
         <config.version>1.3.3</config.version>
     </properties>
