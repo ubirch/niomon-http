@@ -31,9 +31,11 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
 import com.ubirch.kafka.RichAnyConsumerRecord
 import com.ubirch.receiver.actors.{RequestData, ResponseData}
+import com.ubirch.receiver.http.HttpServer.{requestReceived, responsesSent}
+import io.prometheus.client.Counter
 
 import scala.concurrent.ExecutionContext
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSystem) {
 
@@ -50,6 +52,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             req =>
               entity(as[Array[Byte]]) {
                 input =>
+                  requestReceived.inc()
                   val requestId = UUID.randomUUID().toString
                   log.debug(s"HTTP request-id $requestId")
                   val headers = getHeaders(req)
@@ -63,9 +66,11 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
                       val headers = result.record.headersScala
                       val contentType = determineContentType(headers)
                       val status = headers.get("http-status-code").map(_.toInt: StatusCode).getOrElse(StatusCodes.OK)
+                      responsesSent.labels(status.toString()).inc()
                       complete(HttpResponse(status = status, entity = HttpEntity(contentType, result.record.value())))
                     case Failure(e) =>
                       log.debug("dispatcher failure", e)
+                      responsesSent.labels(StatusCodes.InternalServerError.toString()).inc()
                       complete((StatusCodes.InternalServerError, e.getMessage))
                   }
               }
@@ -109,51 +114,12 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
 }
 
 object HttpServer {
-  final class `X-XSRF-TOKEN`(token: String) extends ModeledCustomHeader[`X-XSRF-TOKEN`] {
-    override def value(): String = token
-    override def renderInRequests(): Boolean = true
-    override def renderInResponses(): Boolean = true
-    override def companion: ModeledCustomHeaderCompanion[`X-XSRF-TOKEN`] = `X-XSRF-TOKEN`
-  }
+  val requestReceived: Counter = Counter
+    .build("niomon_receiver_http_requests_count", "Number of http request received.")
+    .register()
 
-  final class `X-Niomon-Purge-Caches`(inner: String) extends ModeledCustomHeader[`X-Niomon-Purge-Caches`] {
-    override def companion: ModeledCustomHeaderCompanion[`X-Niomon-Purge-Caches`] = `X-Niomon-Purge-Caches`
-    override def value(): String = inner
-    override def renderInRequests(): Boolean = true
-    override def renderInResponses(): Boolean = true
-  }
-
-  object `X-Niomon-Purge-Caches` extends ModeledCustomHeaderCompanion[`X-Niomon-Purge-Caches`] {
-    override def name: String = "X-Niomon-Purge-Caches"
-    override def parse(value: String): Try[`X-Niomon-Purge-Caches`] = Try(new `X-Niomon-Purge-Caches`(value))
-  }
-
-  object `X-XSRF-TOKEN` extends ModeledCustomHeaderCompanion[`X-XSRF-TOKEN`] {
-    override def name: String = "X-XSRF-TOKEN"
-    override def parse(value: String): Try[`X-XSRF-TOKEN`] = Try(new `X-XSRF-TOKEN`(value))
-  }
-
-  final class `X-Cumulocity-BaseUrl`(baseUrl: String) extends ModeledCustomHeader[`X-Cumulocity-BaseUrl`] {
-    override def value(): String = baseUrl
-    override def renderInRequests(): Boolean = true
-    override def renderInResponses(): Boolean = true
-    override def companion: ModeledCustomHeaderCompanion[`X-Cumulocity-BaseUrl`] = `X-Cumulocity-BaseUrl`
-  }
-
-  object `X-Cumulocity-BaseUrl` extends ModeledCustomHeaderCompanion[`X-Cumulocity-BaseUrl`] {
-    override def name: String = "X-Cumulocity-BaseUrl"
-    override def parse(value: String): Try[`X-Cumulocity-BaseUrl`] = Try(new `X-Cumulocity-BaseUrl`(value))
-  }
-
-  final class `X-Cumulocity-Tenant`(tenant: String) extends ModeledCustomHeader[`X-Cumulocity-Tenant`] {
-    override def value(): String = tenant
-    override def renderInRequests(): Boolean = true
-    override def renderInResponses(): Boolean = true
-    override def companion: ModeledCustomHeaderCompanion[`X-Cumulocity-Tenant`] = `X-Cumulocity-Tenant`
-  }
-
-  object `X-Cumulocity-Tenant` extends ModeledCustomHeaderCompanion[`X-Cumulocity-Tenant`] {
-    override def name: String = "X-Cumulocity-Tenant"
-    override def parse(value: String): Try[`X-Cumulocity-Tenant`] = Try(new `X-Cumulocity-Tenant`(value))
-  }
+  val responsesSent: Counter = Counter
+    .build("niomon_receiver_http_responses_count", "Number of http responses sent.")
+    .labelNames("status")
+    .register()
 }

@@ -23,6 +23,8 @@ import com.typesafe.config.{Config, ConfigFactory}
 import com.ubirch.receiver.actors.{ClusterAwareRegistry, ClusterListener, Dispatcher, Registry}
 import com.ubirch.receiver.http.HttpServer
 import com.ubirch.receiver.kafka.{KafkaListener, KafkaPublisher}
+import io.prometheus.client.exporter.{HTTPServer => PrometheusHttpServer}
+import io.prometheus.client.hotspot.DefaultExports
 
 object Main {
   val DEPLOYMENT_MODE_ENV = "DEPLOYMENT_MODE"
@@ -33,9 +35,10 @@ object Main {
   val HTTP_PORT_PROPERTY = "http.port"
 
   def main(args: Array[String]): Unit = {
-
     val isCluster = sys.env.get(DEPLOYMENT_MODE_ENV).forall(!_.equalsIgnoreCase("local"))
     val config: Config = loadConfig(isCluster)
+
+    initPrometheus(config.getConfig("prometheus"))
 
     implicit val system: ActorSystem = createActorSystem(config, isCluster)
     val registry: ActorRef = createRegistry(system, isCluster)
@@ -78,5 +81,10 @@ object Main {
     } else {
       system.actorOf(Props(classOf[Registry]), "registry")
     }
+  }
+
+  private def initPrometheus(prometheusConfig: Config): Unit = {
+    DefaultExports.initialize()
+    val _ = new PrometheusHttpServer(prometheusConfig.getInt("port"), true)
   }
 }
