@@ -99,15 +99,19 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
     }
   }
 
+  private val HEADERS_TO_PRESERVE = Array( // excludes Cookie header, because we only want one specific cookie
+    "Content-Type",
+    "Authorization",
+    "X-XSRF-TOKEN",
+    "X-Cumulocity-BaseUrl",
+    "X-Cumulocity-Tenant",
+    "X-Niomon-Purge-Caches"
+  )
+
   private def getHeaders(req: HttpRequest): Map[String, String] = {
-    val headersToPreserve = req.headers.filter(h =>
-      h.name() == "Content-Type" ||
-      h.name() == "Authorization" ||
-      h.name() == "X-XSRF-TOKEN" ||
-      h.name() == "X-Cumulocity-BaseUrl" ||
-      h.name() == "X-Cumulocity-Tenant" ||
-      h.name() == "X-Niomon-Purge-Caches"
-    ) ++ req.header[Cookie].flatMap { c => c.cookies.find(_.name == "authorization").map(Cookie(_)) }
+    val headersToPreserve = req.headers.filter { h =>
+      HEADERS_TO_PRESERVE.contains(h.name())
+    } ++ req.header[Cookie].flatMap { c => c.cookies.find(_.name == "authorization").map(Cookie(_)) }
 
     Map("Request-URI" -> req.uri.toString) ++ headersToPreserve.map(h => h.name -> h.value)
   }
