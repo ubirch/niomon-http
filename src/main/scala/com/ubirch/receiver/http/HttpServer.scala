@@ -119,11 +119,11 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
 
 object HttpServer {
   val requestReceived: Counter = Counter
-    .build("niomon_receiver_http_requests_count", "Number of http request received.")
+    .build("ubirch_niomon_receiver_http_requests_count", "Number of http request received.")
     .register()
 
   val responsesSent: Counter = Counter
-    .build("niomon_receiver_http_responses_count", "Number of http responses sent.")
+    .build("ubirch_niomon_receiver_http_responses_count", "Number of http responses sent.")
     .labelNames("status")
     .register()
 }
