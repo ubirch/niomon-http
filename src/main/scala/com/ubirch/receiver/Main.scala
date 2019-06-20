@@ -16,9 +16,11 @@
 
 package com.ubirch.receiver
 
-import akka.actor.{ActorRef, ActorSystem, AddressFromURIString, Props}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
+import akka.management.cluster.bootstrap.ClusterBootstrap
+import akka.management.scaladsl.AkkaManagement
 import com.typesafe.config.{Config, ConfigFactory}
 import com.ubirch.receiver.actors.{ClusterAwareRegistry, ClusterListener, Dispatcher, Registry}
 import com.ubirch.receiver.http.HttpServer
@@ -36,11 +38,11 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val isCluster = sys.env.get(DEPLOYMENT_MODE_ENV).forall(!_.equalsIgnoreCase("local"))
-    val config: Config = loadConfig(isCluster)
+    val config: Config = ConfigFactory.load()
 
     initPrometheus(config.getConfig("prometheus"))
 
-    implicit val system: ActorSystem = createActorSystem(config, isCluster)
+    implicit val system: ActorSystem = createActorSystem(isCluster)
     val registry: ActorRef = createRegistry(system, isCluster)
 
     val kafkaUrl: String = config.getString(KAFKA_URL_PROPERTY)
@@ -52,23 +54,16 @@ object Main {
     new HttpServer(config.getInt(HTTP_PORT_PROPERTY), dispatcher).serveHttp()
   }
 
-  private def loadConfig(cluster: Boolean) = {
-    if (cluster) {
-      ConfigFactory.load.getConfig("cluster").withFallback(ConfigFactory.load())
-    } else {
-      ConfigFactory.load()
-    }
-  }
-
-  private def createActorSystem(config: Config, isCluster: Boolean) = {
+  private def createActorSystem(isCluster: Boolean) = {
     if (isCluster) {
-      val addresses = sys.env.getOrElse("CLUSTER_SEED_NODES", "").split(',').toList.map(AddressFromURIString(_))
-      val cluster = Cluster(ActorSystem("http-receiver", config))
-      cluster.joinSeedNodes(addresses)
-      cluster.system
+      val system = ActorSystem("http-receiver")
+      Cluster(system)
+      AkkaManagement(system).start()
+      ClusterBootstrap(system).start()
 
+      system
     } else {
-      ActorSystem("http-receiver", config)
+      ActorSystem("http-receiver")
     }
   }
 

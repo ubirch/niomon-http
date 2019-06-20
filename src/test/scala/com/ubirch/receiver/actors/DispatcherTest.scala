@@ -19,7 +19,6 @@ package com.ubirch.receiver.actors
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.TestProbe
 import com.ubirch.receiver.kafka.KafkaPublisher
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
@@ -51,7 +50,7 @@ class DispatcherTest extends FlatSpec with MockitoSugar with ArgumentMatchersSug
     //given
     val registry = system.actorOf(Props(classOf[Registry]))
     val dispatcher = system.actorOf(Props(classOf[Dispatcher], registry, requestHandlerCreator(mock[KafkaPublisher])))
-    val responseData = ResponseData("someId", new ConsumerRecord("", 0, 0, "someId", "value".getBytes))
+    val responseData = ResponseData("someId", Map(), "value".getBytes)
 
     val someRequestHandler = TestProbe()
     registry ! RegisterRequestHandler(RequestHandlerReference("someId", someRequestHandler.ref))

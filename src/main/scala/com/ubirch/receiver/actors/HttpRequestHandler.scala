@@ -20,7 +20,6 @@ import akka.actor.Status.Failure
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.pattern.pipe
 import com.ubirch.receiver.kafka.{KafkaPublisher, PublisherException, PublisherSuccess}
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.RecordMetadata
 
 /**
@@ -71,4 +70,4 @@ class HttpRequestHandler(registry: ActorRef, requester: ActorRef, publisher: Kaf
 
 final case class RequestData(requestId: String, payload: Array[Byte], headers: Map[String, String])
 
-final case class ResponseData(requestId: String, record: ConsumerRecord[String, Array[Byte]])
+final case class ResponseData(requestId: String, headers: Map[String, String], data: Array[Byte])

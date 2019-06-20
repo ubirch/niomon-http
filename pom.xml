@@ -68,8 +68,39 @@
         </dependency>
         <dependency>
             <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-cluster-sharding_${scala.major.version}</artifactId>
+            <version>${akka.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-persistence_${scala.major.version}</artifactId>
+            <version>${akka.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-cluster-tools_${scala.major.version}</artifactId>
             <version>${akka.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-discovery_${scala.major.version}</artifactId>
+            <version>${akka.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.lightbend.akka.management</groupId>
+            <artifactId>akka-management-cluster-bootstrap_${scala.major.version}</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.lightbend.akka.management</groupId>
+            <artifactId>akka-management-cluster-http_${scala.major.version}</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.lightbend.akka.discovery</groupId>
+            <artifactId>akka-discovery-kubernetes-api_${scala.major.version}</artifactId>
+            <version>1.0.1</version>
         </dependency>
 
         <!-- kafka -->

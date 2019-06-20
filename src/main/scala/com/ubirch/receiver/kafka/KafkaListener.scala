@@ -27,6 +27,7 @@ import com.ubirch.receiver.actors.ResponseData
 import org.apache.kafka.clients.consumer.{ConsumerRecords, OffsetResetStrategy}
 import org.apache.kafka.common.errors.WakeupException
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
+import com.ubirch.kafka._
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
@@ -68,7 +69,7 @@ class KafkaListener(kafkaUrl: String, topics: Seq[String], dispatcher: ActorRef)
 
   private def deliver(rcds: ConsumerRecords[String, Array[Byte]]): Unit = {
     rcds.iterator().forEachRemaining(record => {
-      dispatcher ! ResponseData(record.key(), record)
+      dispatcher ! ResponseData(record.key(), record.headersScala, record.value())
     })
   }
 

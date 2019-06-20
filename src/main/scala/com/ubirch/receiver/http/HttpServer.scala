@@ -29,7 +29,6 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
-import com.ubirch.kafka.RichAnyConsumerRecord
 import com.ubirch.receiver.actors.{RequestData, ResponseData}
 import com.ubirch.receiver.http.HttpServer.{requestReceived, responsesSent}
 import io.prometheus.client.Counter
@@ -63,11 +62,11 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
                     case Success(res) =>
                       val result = res.asInstanceOf[ResponseData]
                       // ToDo BjB 21.09.18 : Revise Headers
-                      val headers = result.record.headersScala
+                      val headers = result.headers
                       val contentType = determineContentType(headers)
                       val status = headers.get("http-status-code").map(_.toInt: StatusCode).getOrElse(StatusCodes.OK)
                       responsesSent.labels(status.toString()).inc()
-                      complete(HttpResponse(status = status, entity = HttpEntity(contentType, result.record.value())))
+                      complete(HttpResponse(status = status, entity = HttpEntity(contentType, result.data)))
                     case Failure(e) =>
                       log.debug("dispatcher failure", e)
                       responsesSent.labels(StatusCodes.InternalServerError.toString()).inc()

@@ -20,7 +20,6 @@ import akka.actor.Status.Failure
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.TestProbe
 import com.ubirch.receiver.kafka.{KafkaPublisher, PublisherException, PublisherSuccess}
-import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
@@ -55,7 +54,7 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
     //given
     val returnTo = TestProbe()
     val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], TestProbe().ref, returnTo.ref, mock[KafkaPublisher]))
-    val responseData = ResponseData("requestId", new ConsumerRecord("", 0, 0, "requestId", "value".getBytes))
+    val responseData = ResponseData("requestId", Map(), "value".getBytes)
 
     // when
     requestHandler ! responseData
@@ -68,7 +67,7 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
     //given
     val registry = TestProbe()
     val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], registry.ref, TestProbe().ref, mock[KafkaPublisher]))
-    val responseData = ResponseData("requestId", new ConsumerRecord("", 0, 0, "requestId", "value".getBytes))
+    val responseData = ResponseData("requestId", Map(), "value".getBytes)
 
     // when
     requestHandler ! responseData
