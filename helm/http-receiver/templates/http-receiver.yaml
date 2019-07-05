@@ -1,0 +1,46 @@
+{{- define "http-receiver.env" -}}
+- name: DEPLOYMENT_MODE
+  value: "cluster"
+- name: HTTP_PORT
+  value: "8080"
+- name: KAFKA_TOPIC_OUT
+  value: "binary.request"
+- name: KAFKA_TOPIC_IN
+  value: "binary.response"
+- name: K8S_NAMESPACE
+  value: "{{ .Values.namespace }}"
+- name: HOSTNAME
+  valueFrom:
+   fieldRef:
+    apiVersion: v1
+    fieldPath: status.podIP
+{{- end -}}
+
+{{- $deployment := (dict "envStr" (include "http-receiver.env" .)) -}}
+
+{{- $_ := set $deployment "Root" . -}}
+{{- $_ := set $deployment "name" "http-receiver" -}}
+{{- $_ := set $deployment "readinessPort" 8080 -}}
+{{- $_ := set $deployment "replicas" 3 -}}
+{{- $_ := set $deployment "ports" (tuple (dict "name" "akka-management" "port" 8558) (dict "name" "akka-remoting" "port" 2551)) -}}
+
+{{ template "niomon.deployment" $deployment }}
+
+---
+
+{{- define "http-receiver.servicePorts" -}}
+- name: http
+  port: 8080
+  protocol: TCP
+- name: java-debug
+  port: 9020
+  protocol: TCP
+  nodePort: 30020
+- name: akka-management
+  port: 8558
+  protocol: TCP
+{{- end -}}
+
+{{- $_ := set $deployment "servicePorts" (include "http-receiver.servicePorts" .)}}
+
+{{ template "niomon.service" $deployment }}
