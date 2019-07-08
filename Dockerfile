@@ -11,8 +11,8 @@ LABEL "com.ubirch.version"="${VERSION}"
 
 EXPOSE 8080
 EXPOSE 9010
-EXPOSE 2552
 EXPOSE 9020
+EXPOSE 4321
 
 ENV _JAVA_OPTIONS "-Xms128m -Xmx256m -Djava.awt.headless=true"
 
