@@ -44,3 +44,7 @@
 {{- $_ := set $deployment "servicePorts" (include "http-receiver.servicePorts" .)}}
 
 {{ template "niomon.service" $deployment }}
+
+---
+
+{{ template "niomon.prometheus.monitor" $deployment}}
