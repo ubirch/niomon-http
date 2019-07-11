@@ -23,6 +23,7 @@
 {{- $_ := set $deployment "readinessPort" 8080 -}}
 {{- $_ := set $deployment "replicas" 3 -}}
 {{- $_ := set $deployment "ports" (tuple (dict "name" "akka-management" "port" 8558) (dict "name" "akka-remoting" "port" 2551)) -}}
+{{- $_ := set $deployment "serviceAccountName" "ingest" -}}
 
 {{- define "http-receiver.servicePorts" -}}
 - name: http
