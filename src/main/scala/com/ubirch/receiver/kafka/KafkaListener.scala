@@ -39,7 +39,7 @@ class KafkaListener(kafkaUrl: String, topics: Seq[String], dispatcher: ActorRef)
     Conf(new StringDeserializer(),
       new ByteArrayDeserializer(),
       bootstrapServers = kafkaUrl,
-      groupId = "http-receiver",
+      groupId = "niomon-http",
       autoOffsetReset = OffsetResetStrategy.LATEST)
   )
   private val running: AtomicBoolean = new AtomicBoolean(true)

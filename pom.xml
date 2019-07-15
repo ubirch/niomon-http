@@ -19,13 +19,12 @@
          xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <parent>
-        <groupId>com.ubirch</groupId>
-        <artifactId>niomon-base</artifactId>
+        <groupId>com.ubirch.niomon</groupId>
+        <artifactId>parent</artifactId>
         <version>1.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
-    <artifactId>http-receiver</artifactId>
+    <artifactId>http</artifactId>
     <version>1.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -37,7 +36,7 @@
         </license>
     </licenses>
 
-    <name>http-receiver [${project.version}]</name>
+    <name>http [${project.version}]</name>
     <description>routes incoming data to kafka</description>
 
     <organization>

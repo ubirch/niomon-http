@@ -1,16 +1,16 @@
 # WIP
 
-# http-receiver
+# niomon-http
 
 #### Overview
 
-http-receiver acts as (one) entry point to the ubirch ingestion pipeline. 
+niomon-http acts as (one) entry point to the ubirch ingestion pipeline. 
 It is accepting http-requests and publishes the request data to a kafka topic for later processing. 
 It is responding the requests with the result of the processing within the pipeline.
 Correlation of request data and response data is done using a unique `requestId` which is generated for
 each request and sent as header to kafka together with the request data.
 
-http-receiver is capable of running with multiple instances as a akka cluster. Which is the default
+niomon-http is capable of running with multiple instances as a akka cluster. Which is the default
 deployment strategy in kubernetes.
 
 #### Implementation
@@ -45,11 +45,11 @@ all registrations.
 **Notes on Kafka**
 
 * Due to the implementation described above, the configuration of topics (namely the count of partitions per
-topic) can be handled transparently to the http-receiver.
+topic) can be handled transparently to the niomon-http.
 * There is no need to implement a custom `org.apache.kafka.clients.producer.Partitioner` for the
 kafka producer or a `partition.assignment.strategy` for the kafka consumer. 
 * for best scaling the number of partitions for the incoming and the outcoming topic should be equal or a multiple
-of the deployed instances (nodes) of the http-receiver.
+of the deployed instances (nodes) of the niomon-http.
 
 #### Frameworks and Dependencies
 
@@ -114,7 +114,7 @@ together with kafka and zookeeper. **Again incoming and outgoing topics are the 
 the responses will echo the request data.**
 
 1. build with `mvn package`
-2. in directory `http-receiver` run `docker-compose up --build --force-recreate`
+2. in directory `niomon-http` run `docker-compose up --build --force-recreate`
 3. afterwards stop with `ctrl-c` and `docker-compose down` (which removes the containers) 
  
 HTTP endpoints of both receivers are now reachable via `http://localhost:8080/` and `http://localhost:8081/`.

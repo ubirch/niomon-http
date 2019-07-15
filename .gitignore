@@ -1,0 +1,6 @@
+/target
+/Dockerfile
+/*.iml
+/helm/http/templates/_helpers.yaml
+/helm/http/.helmignore
+/helm/http/values.*.yaml

@@ -1,4 +1,4 @@
-{{- define "http-receiver.env" -}}
+{{- define "niomon-http.env" -}}
 - name: DEPLOYMENT_MODE
   value: "cluster"
 - name: HTTP_PORT
@@ -16,16 +16,16 @@
     fieldPath: status.podIP
 {{- end -}}
 
-{{- $deployment := (dict "envStr" (include "http-receiver.env" .)) -}}
+{{- $deployment := (dict "envStr" (include "niomon-http.env" .)) -}}
 
 {{- $_ := set $deployment "Root" . -}}
-{{- $_ := set $deployment "name" "http-receiver" -}}
+{{- $_ := set $deployment "name" "niomon-http" -}}
 {{- $_ := set $deployment "readinessPort" 8080 -}}
 {{- $_ := set $deployment "replicas" 3 -}}
 {{- $_ := set $deployment "ports" (tuple (dict "name" "akka-management" "port" 8558) (dict "name" "akka-remoting" "port" 2551)) -}}
 {{- $_ := set $deployment "serviceAccountName" "ingest" -}}
 
-{{- define "http-receiver.servicePorts" -}}
+{{- define "niomon-http.servicePorts" -}}
 - name: http
   port: 8080
   protocol: TCP
@@ -38,7 +38,7 @@
   protocol: TCP
 {{- end -}}
 
-{{- $_ := set $deployment "servicePorts" (include "http-receiver.servicePorts" .)}}
+{{- $_ := set $deployment "servicePorts" (include "niomon-http.servicePorts" .)}}
 
 {{ template "niomon.deployment" $deployment }}
 

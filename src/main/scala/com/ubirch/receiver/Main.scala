@@ -56,14 +56,14 @@ object Main {
 
   private def createActorSystem(isCluster: Boolean) = {
     if (isCluster) {
-      val system = ActorSystem("http-receiver")
+      val system = ActorSystem("niomon-http")
       Cluster(system)
       AkkaManagement(system).start()
       ClusterBootstrap(system).start()
 
       system
     } else {
-      ActorSystem("http-receiver")
+      ActorSystem("niomon-http")
     }
   }
 
