@@ -38,11 +38,39 @@
 
     <name>http [${project.version}]</name>
     <description>routes incoming data to kafka</description>
+    <url>https://ubirch.com/</url>
 
     <organization>
         <name>ubirch GmbH</name>
         <url>https://ubirch.com/</url>
     </organization>
+
+    <developers>
+        <developer>
+            <name>Mikołaj Robakowski</name>
+            <email>mikolaj.robakowski@ubirch.com</email>
+            <organization>ubirch GmbH</organization>
+            <organizationUrl>https://ubirch.com/</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/ubirch/niomon-${project.artifactId}.git</connection>
+        <developerConnection>scm:git:git@github.com:ubirch/niomon-${project.artifactId}.git</developerConnection>
+        <url>https://github.com/ubirch/niomon-${project.artifactId}</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <config.version>1.3.3</config.version>
@@ -166,6 +194,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -180,6 +211,16 @@
             <id>bintray-cakesolutions-maven</id>
             <name>bintray</name>
             <url>http://dl.bintray.com/cakesolutions/maven</url>
+        </repository>
+        <repository>
+            <id>snapshots-repo</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
         </repository>
     </repositories>
 
