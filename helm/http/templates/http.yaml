@@ -19,7 +19,7 @@
 {{- $deployment := (dict "envStr" (include "niomon-http.env" .)) -}}
 
 {{- $_ := set $deployment "Root" . -}}
-{{- $_ := set $deployment "name" "niomon-http" -}}
+{{- $_ := set $deployment "name" "http" -}}
 {{- $_ := set $deployment "readinessPort" 8080 -}}
 {{- $_ := set $deployment "replicas" 3 -}}
 {{- $_ := set $deployment "ports" (tuple (dict "name" "akka-management" "port" 8558) (dict "name" "akka-remoting" "port" 2551)) -}}
