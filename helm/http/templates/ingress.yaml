@@ -32,7 +32,7 @@ spec:
         paths:
           - path: {{ $ingressPath }}
             backend:
-              serviceName: niomon-niomon-http-service
+              serviceName: niomon-http-service
               servicePort: 8080
   {{- end }}
 {{- end }}
