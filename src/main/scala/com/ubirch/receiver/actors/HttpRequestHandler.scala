@@ -19,6 +19,7 @@ package com.ubirch.receiver.actors
 import akka.actor.Status.Failure
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.pattern.pipe
+import akka.serialization.Serialization
 import com.ubirch.receiver.kafka.{KafkaPublisher, PublisherException, PublisherSuccess}
 import org.apache.kafka.clients.producer.RecordMetadata
 
@@ -27,7 +28,7 @@ import org.apache.kafka.clients.producer.RecordMetadata
   * From each request the request data is published kafka.
   * When the responseData arrives from kafka it is send to the original requester
   */
-class HttpRequestHandler(registry: ActorRef, requester: ActorRef, publisher: KafkaPublisher) extends Actor with ActorLogging {
+class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends Actor with ActorLogging {
   import context.dispatcher
 
   var startMillis = 0L
@@ -35,18 +36,19 @@ class HttpRequestHandler(registry: ActorRef, requester: ActorRef, publisher: Kaf
   def receive: Receive = {
     case RequestData(k, p, h) =>
       log.debug(s"received input with requestId [$k]")
-      publisher.send(k, p, h) pipeTo self
+      val selfPath = Serialization.serializedActorPath(self)
+      publisher.send(k, p, h + ("http-request-handler-actor" -> selfPath)) pipeTo self
       startMillis = System.currentTimeMillis()
     case response: ResponseData =>
       log.debug(s"received response with requestId [${response.requestId}]")
       requester ! response
       logRequestResponseTime(response)
-      registry ! UnregisterRequestHandler(response.requestId)
+      context.stop(self)
 
     case f@Failure(PublisherException(cause, requestId)) =>
       log.error(cause, s"publisher failed for requestId [$requestId]")
       requester ! f
-      registry ! UnregisterRequestHandler(requestId)
+      context.stop(self)
     case PublisherSuccess(_: RecordMetadata, requestId: String) =>
       log.debug(s"request with requestId [$requestId] published successfully")
   }

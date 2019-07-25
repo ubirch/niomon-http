@@ -17,6 +17,7 @@
 package com.ubirch.receiver.actors
 
 import akka.actor.{ActorSystem, Props}
+import akka.serialization.Serialization
 import akka.testkit.TestProbe
 import com.ubirch.receiver.kafka.KafkaPublisher
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
@@ -30,36 +31,31 @@ class DispatcherTest extends FlatSpec with MockitoSugar with ArgumentMatchersSug
   behavior of "Dispatcher"
 
 
-  it should "create a request handler for handling request data and register them in registry" in {
+  it should "create a request handler for handling request data" in {
     val createdRequestHandler = TestProbe()
-    val registry = TestProbe()
-    val creator: HttpRequestHandlerCreator = (_, _, _, _) => createdRequestHandler.ref
-    val dispatcher = system.actorOf(Props(classOf[Dispatcher], registry.ref, creator))
+    val creator: HttpRequestHandlerCreator = (_, _, _) => createdRequestHandler.ref
+    val dispatcher = system.actorOf(Props(classOf[Dispatcher], creator))
     val requestData = RequestData("someId", "value".getBytes, Map())
 
     // when
     dispatcher ! requestData
 
     //then
-    registry.expectMsg(RegisterRequestHandler(RequestHandlerReference("someId", createdRequestHandler.ref)))
     createdRequestHandler.expectMsg(requestData)
   }
 
 
   it should "send response data to the requestHandler for the some requestId" in {
     //given
-    val registry = system.actorOf(Props(classOf[Registry]))
-    val dispatcher = system.actorOf(Props(classOf[Dispatcher], registry, requestHandlerCreator(mock[KafkaPublisher])))
-    val responseData = ResponseData("someId", Map(), "value".getBytes)
-
-    val someRequestHandler = TestProbe()
-    registry ! RegisterRequestHandler(RequestHandlerReference("someId", someRequestHandler.ref))
+    val handler = TestProbe()
+    val dispatcher = system.actorOf(Props(classOf[Dispatcher], requestHandlerCreator(mock[KafkaPublisher])))
+    val responseData = ResponseData("someId", Map("http-request-handler-actor" -> Serialization.serializedActorPath(handler.ref)), "value".getBytes)
 
     // when
     dispatcher ! responseData
 
     // then
-    someRequestHandler.expectMsg(responseData)
+    handler.expectMsg(responseData)
   }
 
   override protected def afterAll(): Unit = {

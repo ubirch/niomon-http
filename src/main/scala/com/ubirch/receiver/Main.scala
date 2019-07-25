@@ -18,11 +18,10 @@ package com.ubirch.receiver
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.cluster.Cluster
-import akka.cluster.pubsub.DistributedPubSub
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import com.typesafe.config.{Config, ConfigFactory}
-import com.ubirch.receiver.actors.{ClusterAwareRegistry, ClusterListener, Dispatcher, Registry}
+import com.ubirch.receiver.actors.Dispatcher
 import com.ubirch.receiver.http.HttpServer
 import com.ubirch.receiver.kafka.{KafkaListener, KafkaPublisher}
 import io.prometheus.client.exporter.{HTTPServer => PrometheusHttpServer}
@@ -43,11 +42,10 @@ object Main {
     initPrometheus(config.getConfig("prometheus"))
 
     implicit val system: ActorSystem = createActorSystem(isCluster)
-    val registry: ActorRef = createRegistry(system, isCluster)
 
     val kafkaUrl: String = config.getString(KAFKA_URL_PROPERTY)
     val publisher = new KafkaPublisher(kafkaUrl, config.getString(Main.KAFKA_TOPIC_INCOMING_PROPERTY))
-    val dispatcher: ActorRef = system.actorOf(Props(classOf[Dispatcher], registry, actors.requestHandlerCreator(publisher)), "dispatcher")
+    val dispatcher: ActorRef = system.actorOf(Props(classOf[Dispatcher], actors.requestHandlerCreator(publisher)), "dispatcher")
     val listener = new KafkaListener(kafkaUrl, List(config.getString(KAFKA_TOPIC_OUTGOING_PROPERTY)), dispatcher)
 
     listener.startPolling()
@@ -64,17 +62,6 @@ object Main {
       system
     } else {
       ActorSystem("niomon-http")
-    }
-  }
-
-  private def createRegistry(system: ActorSystem, isCluster: Boolean): ActorRef = {
-    if (isCluster) {
-      val registry: ActorRef = system.actorOf(Props(classOf[Registry]), "registry")
-      val clusterRegistry = system.actorOf(Props(classOf[ClusterAwareRegistry], DistributedPubSub(system).mediator, registry), "clusterRegistry")
-      system.actorOf(Props(classOf[ClusterListener], clusterRegistry))
-      clusterRegistry
-    } else {
-      system.actorOf(Props(classOf[Registry]), "registry")
     }
   }
 

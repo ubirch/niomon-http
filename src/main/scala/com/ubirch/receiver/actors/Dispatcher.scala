@@ -18,17 +18,14 @@ package com.ubirch.receiver.actors
 
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
-import akka.pattern.ask
+import akka.actor.{Actor, ActorLogging, ActorRef, ExtendedActorSystem}
 import akka.util.Timeout
-
-import scala.util.{Failure, Success}
 
 /**
   * Creates a HttpRequestHandler for each incoming RequestData from HTTP.
   * Routes the responses from kafka to the formerly created HttpRequestHandler
   */
-class Dispatcher(registry: ActorRef, handlerCreator: HttpRequestHandlerCreator) extends Actor with ActorLogging {
+class Dispatcher(handlerCreator: HttpRequestHandlerCreator) extends Actor with ActorLogging {
   implicit val timeout: Timeout = Timeout(100, TimeUnit.MILLISECONDS) // scalastyle:off magic.number
 
   import context._
@@ -36,18 +33,22 @@ class Dispatcher(registry: ActorRef, handlerCreator: HttpRequestHandlerCreator) 
   override def receive: Receive = {
     case req: RequestData =>
       log.debug(s"received RequestData with requestId [${req.requestId}]")
-      val reqHandler = handlerCreator(context, registry, sender(), req.requestId)
-      registry ! RegisterRequestHandler(RequestHandlerReference(req.requestId, reqHandler))
+      val reqHandler = handlerCreator(context, sender(), req.requestId)
       reqHandler ! req
 
     case resp: ResponseData =>
       log.debug(s"received ResponseData with requestId [${resp.requestId}]")
-      (registry ? ResolveRequestHandler(resp.requestId)) onComplete {
-        case Success(Some(reqHandler: RequestHandlerReference)) =>
-          log.debug(s"forwarding response with requestId [${resp.requestId}] to actor [${reqHandler.actorRef.toString()}]")
-          reqHandler.actorRef ! resp
-        case Success(msg) => log.error(s"received unknown message $msg")
-        case Failure(e) => log.error(s"could not find actor for request ${resp.requestId}", e)
+
+      val maybeSerializedActorRef = resp.headers.get("http-request-handler-actor")
+
+      if (maybeSerializedActorRef.isEmpty) {
+        log.error(s"Found a response without a handler! resp: [$resp]")
+      }
+
+      maybeSerializedActorRef.foreach { actorRefStr =>
+        log.debug(s"trying to deserialize actor ref: [$actorRefStr]")
+        val handlerRef = system.asInstanceOf[ExtendedActorSystem].provider.resolveActorRef(actorRefStr)
+        handlerRef ! resp
       }
   }
 }
