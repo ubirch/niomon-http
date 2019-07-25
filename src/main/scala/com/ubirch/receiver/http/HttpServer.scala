@@ -30,8 +30,8 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
 import com.ubirch.receiver.actors.{RequestData, ResponseData}
-import com.ubirch.receiver.http.HttpServer.{requestReceived, responsesSent}
-import io.prometheus.client.Counter
+import com.ubirch.receiver.http.HttpServer._
+import io.prometheus.client.{Counter, Summary}
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
@@ -52,6 +52,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
               entity(as[Array[Byte]]) {
                 input =>
                   requestReceived.inc()
+                  val timer = processingTimer.startTimer()
                   val requestId = UUID.randomUUID().toString
                   log.debug(s"HTTP request-id $requestId")
                   val headers = getHeaders(req)
@@ -66,10 +67,12 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
                       val contentType = determineContentType(headers)
                       val status = headers.get("http-status-code").map(_.toInt: StatusCode).getOrElse(StatusCodes.OK)
                       responsesSent.labels(status.toString()).inc()
+                      timer.observeDuration()
                       complete(HttpResponse(status = status, entity = HttpEntity(contentType, result.data)))
                     case Failure(e) =>
                       log.debug("dispatcher failure", e)
                       responsesSent.labels(StatusCodes.InternalServerError.toString()).inc()
+                      timer.observeDuration()
                       complete((StatusCodes.InternalServerError, e.getMessage))
                   }
               }
@@ -118,11 +121,15 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
 
 object HttpServer {
   val requestReceived: Counter = Counter
-    .build("ubirch_niomon_receiver_http_requests_count", "Number of http request received.")
+    .build("http_requests_count", "Number of http request received.")
     .register()
 
   val responsesSent: Counter = Counter
-    .build("ubirch_niomon_receiver_http_responses_count", "Number of http responses sent.")
+    .build("http_responses_count", "Number of http responses sent.")
     .labelNames("status")
+    .register()
+
+  val processingTimer: Summary = Summary
+    .build("processing_time", "Message processing time in seconds")
     .register()
 }
