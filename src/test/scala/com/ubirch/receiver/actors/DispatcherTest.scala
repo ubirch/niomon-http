@@ -35,7 +35,7 @@ class DispatcherTest extends FlatSpec with MockitoSugar with ArgumentMatchersSug
     val createdRequestHandler = TestProbe()
     val creator: HttpRequestHandlerCreator = (_, _, _) => createdRequestHandler.ref
     val dispatcher = system.actorOf(Props(classOf[Dispatcher], creator))
-    val requestData = RequestData("someId", "value".getBytes, Map())
+    val requestData = RequestData("someId", "value".getBytes, Map("hdr" -> "value"))
 
     // when
     dispatcher ! requestData

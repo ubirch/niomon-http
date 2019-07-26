@@ -24,8 +24,6 @@ import akka.event.Logging
 import akka.event.Logging.MDC
 import akka.util.Timeout
 
-import scala.collection.JavaConverters._
-
 /**
   * Creates a HttpRequestHandler for each incoming RequestData from HTTP.
   * Routes the responses from kafka to the formerly created HttpRequestHandler
@@ -38,7 +36,8 @@ class Dispatcher(handlerCreator: HttpRequestHandlerCreator) extends Actor with D
   override def mdc(currentMessage: Any): MDC = currentMessage match {
     case r: RequestData => Map("requestId" -> r.requestId) ++
       (if (log.isDebugEnabled) Map(
-        "headers" -> r.headers.asJava,
+        // does not work, flattens the object and that breaks the index
+        //        "headers" -> r.headers.asJava,
         "data" -> Base64.getEncoder.encodeToString(r.payload))
       else Nil)
     case r: ResponseData => Map("requestId" -> r.requestId)
