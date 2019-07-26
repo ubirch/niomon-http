@@ -27,6 +27,8 @@ import akka.serialization.Serialization
 import com.ubirch.receiver.kafka.{KafkaPublisher, PublisherException, PublisherSuccess}
 import org.apache.kafka.clients.producer.RecordMetadata
 
+import scala.collection.JavaConverters._
+
 /**
   * Each actor of this type serves one specific HTTP request.
   * From each request the request data is published kafka.
@@ -40,7 +42,7 @@ class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends
   override def mdc(currentMessage: Any): MDC = currentMessage match {
     case r: RequestData => Map("requestId" -> r.requestId) ++
       (if (log.isDebugEnabled) Map(
-        "headers" -> r.headers.map(kv => s"${kv._1}=${kv._2}").mkString(","),
+        "headers" -> r.headers.asJava,
         "data" -> Base64.getEncoder.encodeToString(r.payload))
       else Nil)
     case r: ResponseData => Map("requestId" -> r.requestId)
