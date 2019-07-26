@@ -32,7 +32,9 @@ import com.typesafe.scalalogging.Logger
 import com.ubirch.receiver.actors.{RequestData, ResponseData}
 import com.ubirch.receiver.http.HttpServer._
 import io.prometheus.client.{Counter, Summary}
+import net.logstash.logback.argument.StructuredArguments.v
 
+import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
@@ -54,10 +56,8 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
                   requestReceived.inc()
                   val timer = processingTimer.startTimer()
                   val requestId = UUID.randomUUID().toString
-                  log.debug(s"HTTP request-id $requestId")
                   val headers = getHeaders(req)
-                  log.debug(s"all HTTP headers: [${req.headers}]")
-                  log.debug(s"HTTP headers to forward to kafka: [$headers]")
+                  log.debug(s"HTTP request: ${v("requestId", requestId)} [${v("headers", headers.asJava)}]")
                   val responseData = dispatcher ? RequestData(requestId, input, headers)
                   onComplete(responseData) {
                     case Success(res) =>

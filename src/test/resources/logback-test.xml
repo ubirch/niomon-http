@@ -33,7 +33,19 @@
     <logger name="kafka" level="WARN"/>
     <logger name="org.apache.zookeeper" level="WARN"/>
 
-    <root level="INFO">
-        <appender-ref ref="STDERR"/>
+
+    <!--    <root level="INFO">-->
+    <!--        <appender-ref ref="STDERR"/>-->
+    <!--    </root>-->
+
+    <appender name="JSONSTDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <timeZone>UTC</timeZone>
+        </encoder>
+    </appender>
+
+    <root level="DEBUG">
+        <appender-ref ref="JSONSTDOUT"/>
     </root>
+
 </configuration>

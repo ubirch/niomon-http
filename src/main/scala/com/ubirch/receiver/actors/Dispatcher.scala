@@ -16,19 +16,32 @@
 
 package com.ubirch.receiver.actors
 
+import java.util.Base64
 import java.util.concurrent.TimeUnit
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ExtendedActorSystem}
+import akka.actor.{Actor, ActorRef, DiagnosticActorLogging, ExtendedActorSystem}
+import akka.event.Logging
+import akka.event.Logging.MDC
 import akka.util.Timeout
 
 /**
   * Creates a HttpRequestHandler for each incoming RequestData from HTTP.
   * Routes the responses from kafka to the formerly created HttpRequestHandler
   */
-class Dispatcher(handlerCreator: HttpRequestHandlerCreator) extends Actor with ActorLogging {
+class Dispatcher(handlerCreator: HttpRequestHandlerCreator) extends Actor with DiagnosticActorLogging {
   implicit val timeout: Timeout = Timeout(100, TimeUnit.MILLISECONDS) // scalastyle:off magic.number
 
   import context._
+
+  override def mdc(currentMessage: Any): MDC = currentMessage match {
+    case r: RequestData => Map("requestId" -> r.requestId) ++
+      (if (log.isDebugEnabled) Map(
+        "headers" -> r.headers.mkString,
+        "data" -> Base64.getEncoder.encodeToString(r.payload))
+      else Nil)
+    case r: ResponseData => Map("requestId" -> r.requestId)
+    case _ => Logging.emptyMDC
+  }
 
   override def receive: Receive = {
     case req: RequestData =>

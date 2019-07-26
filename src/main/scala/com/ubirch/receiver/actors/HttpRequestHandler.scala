@@ -16,8 +16,12 @@
 
 package com.ubirch.receiver.actors
 
+import java.util.Base64
+
 import akka.actor.Status.Failure
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{Actor, ActorRef, DiagnosticActorLogging}
+import akka.event.Logging
+import akka.event.Logging.MDC
 import akka.pattern.pipe
 import akka.serialization.Serialization
 import com.ubirch.receiver.kafka.{KafkaPublisher, PublisherException, PublisherSuccess}
@@ -28,10 +32,23 @@ import org.apache.kafka.clients.producer.RecordMetadata
   * From each request the request data is published kafka.
   * When the responseData arrives from kafka it is send to the original requester
   */
-class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends Actor with ActorLogging {
+class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends Actor with DiagnosticActorLogging {
   import context.dispatcher
 
   var startMillis = 0L
+
+  override def mdc(currentMessage: Any): MDC = currentMessage match {
+    case r: RequestData => Map("requestId" -> r.requestId) ++
+      (if (log.isDebugEnabled) Map(
+        "headers" -> r.headers.map(kv => s"${kv._1}=${kv._2}").mkString(","),
+        "data" -> Base64.getEncoder.encodeToString(r.payload))
+      else Nil)
+    case r: ResponseData => Map("requestId" -> r.requestId)
+    case f@Failure(PublisherException(cause@_, requestId)) =>
+      Map("requestId" -> requestId, "failure" -> f.cause.getMessage)
+    case PublisherSuccess(_, requestId: String) => Map("requestId" -> requestId)
+    case _ => Logging.emptyMDC
+  }
 
   def receive: Receive = {
     case RequestData(k, p, h) =>
@@ -55,18 +72,14 @@ class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends
 
   private def logRequestResponseTime(response: ResponseData): Unit = {
     val time = System.currentTimeMillis() - startMillis
-    log.info(s"Took $time ms to respond to [${response.requestId}]")
+    log.info(s"took $time ms to respond to [${response.requestId}]")
     if (time > 500 && time < 10000) {
-      log.warning(s"Processing took more than half a second for request with id [${response.requestId}]!")
+      log.warning(s"processing took more than half a second for request with id [${response.requestId}]")
     }
     if (time >= 10000) {
-      log.error(s"Processing took more than 10 seconds for request with id [${response.requestId}]. " +
-        "Requesting client most likely timed out!")
+      log.error(s"processing took more than 10 seconds for request with id [${response.requestId}], " +
+        "client most likely timed out")
     }
-  }
-
-  override def postStop(): Unit = {
-    log.debug("stopped")
   }
 }
 
