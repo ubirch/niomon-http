@@ -57,7 +57,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
                   val timer = processingTimer.startTimer()
                   val requestId = UUID.randomUUID().toString
                   val headers = getHeaders(req)
-                  log.debug(s"HTTP request: ${v("requestId", requestId)} [${v("headers", headers.asJava)}]")
+                  log.info(s"HTTP request: ${v("requestId", requestId)} [${v("headers", headers.asJava)}]")
                   val responseData = dispatcher ? RequestData(requestId, input, headers)
                   onComplete(responseData) {
                     case Success(res) =>
@@ -70,7 +70,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
                       timer.observeDuration()
                       complete(HttpResponse(status = status, entity = HttpEntity(contentType, result.data)))
                     case Failure(e) =>
-                      log.debug("dispatcher failure", e)
+                      log.error("dispatcher failure", e)
                       responsesSent.labels(StatusCodes.InternalServerError.toString()).inc()
                       timer.observeDuration()
                       complete((StatusCodes.InternalServerError, e.getMessage))

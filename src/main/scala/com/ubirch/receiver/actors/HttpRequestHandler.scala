@@ -73,7 +73,7 @@ class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends
 
   private def logRequestResponseTime(response: ResponseData): Unit = {
     val time = System.currentTimeMillis() - startMillis
-    log.info(s"took $time ms to respond to [${response.requestId}]")
+    log.debug(s"took $time ms to respond to [${response.requestId}]")
     if (time > 500 && time < 10000) {
       log.warning(s"processing took more than half a second for request with id [${response.requestId}]")
     }

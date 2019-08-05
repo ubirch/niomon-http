@@ -46,12 +46,12 @@ class Dispatcher(handlerCreator: HttpRequestHandlerCreator) extends Actor with D
 
   override def receive: Receive = {
     case req: RequestData =>
-      log.debug(s"received RequestData with requestId [${req.requestId}]")
+      log.debug(s"received request with requestId [${req.requestId}]")
       val reqHandler = handlerCreator(context, sender(), req.requestId)
       reqHandler ! req
 
     case resp: ResponseData =>
-      log.debug(s"received ResponseData with requestId [${resp.requestId}]")
+      log.debug(s"responding to requestId [${resp.requestId}]")
 
       val maybeSerializedActorRef = resp.headers.get("http-request-handler-actor")
 
