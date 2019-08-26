@@ -4,9 +4,9 @@
 - name: HTTP_PORT
   value: "8080"
 - name: KAFKA_TOPIC_OUT
-  value: "binary.request"
+  value: "ubirch-niomon-req-bin"
 - name: KAFKA_TOPIC_IN
-  value: "binary.response"
+  value: "ubirch-common-rsp-signed-bin"
 - name: K8S_NAMESPACE
   value: "{{ .Values.namespace }}"
 - name: HOSTNAME
@@ -21,7 +21,7 @@
 {{- $_ := set $deployment "Root" . -}}
 {{- $_ := set $deployment "name" "http" -}}
 {{- $_ := set $deployment "readinessPort" 8080 -}}
-{{- $_ := set $deployment "replicas" 3 -}}
+  {{- $_ := set $deployment "replicas" .Values.http.replicas -}}
 {{- $_ := set $deployment "ports" (tuple (dict "name" "akka-management" "port" 8558) (dict "name" "akka-remoting" "port" 2551)) -}}
 {{- $_ := set $deployment "serviceAccountName" "ingest" -}}
 
