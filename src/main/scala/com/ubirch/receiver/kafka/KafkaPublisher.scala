@@ -21,10 +21,11 @@ import cakesolutions.kafka.KafkaProducer.Conf
 import org.apache.kafka.clients.producer.{ProducerRecord, RecordMetadata}
 import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 import com.ubirch.kafka.RichAnyProducerRecord
+import com.ubirch.niomon.healthcheck.{Checks, HealthCheckServer}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class KafkaPublisher(kafkaUrl: String, topic: String) {
+class KafkaPublisher(kafkaUrl: String, topic: String, healthCheckServer: HealthCheckServer) {
 
   val producer = KafkaProducer(
     Conf(new StringSerializer(),
@@ -32,6 +33,8 @@ class KafkaPublisher(kafkaUrl: String, topic: String) {
       bootstrapServers = kafkaUrl,
       acks = "all")
   )
+
+  healthCheckServer.setReadinessCheck(Checks.kafka("kafka-producer", producer.producer, connectionCountMustBeNonZero = false))
 
   def send(key: String, payload: Array[Byte], headers: Map[String, String])(implicit ec: ExecutionContext): Future[PublisherSuccess] = {
     val record = new ProducerRecord(topic, null, key, payload).withHeaders(headers.toSeq: _*)

@@ -28,11 +28,12 @@ import org.apache.kafka.clients.consumer.{ConsumerRecords, OffsetResetStrategy}
 import org.apache.kafka.common.errors.WakeupException
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
 import com.ubirch.kafka._
+import com.ubirch.niomon.healthcheck.{Checks, HealthCheckServer}
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}
 
-class KafkaListener(kafkaUrl: String, topics: Seq[String], dispatcher: ActorRef) extends Runnable {
+class KafkaListener(kafkaUrl: String, topics: Seq[String], dispatcher: ActorRef, healthCheckServer: HealthCheckServer) extends Runnable {
 
   val log: Logger = Logger[KafkaListener]
   val consumer = KafkaConsumer(
@@ -42,6 +43,7 @@ class KafkaListener(kafkaUrl: String, topics: Seq[String], dispatcher: ActorRef)
       groupId = "niomon-http",
       autoOffsetReset = OffsetResetStrategy.LATEST)
   )
+  healthCheckServer.setReadinessCheck(Checks.kafka("kafka-consumer", consumer, connectionCountMustBeNonZero = true))
   private val running: AtomicBoolean = new AtomicBoolean(true)
 
   def run(): Unit = {
