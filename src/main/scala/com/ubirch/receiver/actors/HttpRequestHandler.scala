@@ -45,7 +45,7 @@ class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends
         "data" -> Base64.getEncoder.encodeToString(r.payload))
       else Nil)
     case r: ResponseData => Map("requestId" -> r.requestId)
-    case f@Failure(PublisherException(cause@_, requestId)) =>
+    case f@Failure(PublisherException(_, requestId)) =>
       Map("requestId" -> requestId, "failure" -> f.cause.getMessage)
     case PublisherSuccess(_, requestId: String) => Map("requestId" -> requestId)
     case _ => Logging.emptyMDC
