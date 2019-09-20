@@ -131,6 +131,28 @@
             <version>1.0.1</version>
         </dependency>
 
+        <!-- api description -->
+        <dependency>
+            <groupId>com.softwaremill.tapir</groupId>
+            <artifactId>tapir-core_${scala.major.version}</artifactId>
+            <version>0.11.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.softwaremill.tapir</groupId>
+            <artifactId>tapir-akka-http-server_${scala.major.version}</artifactId>
+            <version>0.11.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.softwaremill.tapir</groupId>
+            <artifactId>tapir-openapi-circe-yaml_${scala.major.version}</artifactId>
+            <version>0.11.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.softwaremill.tapir</groupId>
+            <artifactId>tapir-openapi-docs_${scala.major.version}</artifactId>
+            <version>0.11.1</version>
+        </dependency>
+
         <!-- kafka -->
         <dependency>
             <groupId>net.cakesolutions</groupId>

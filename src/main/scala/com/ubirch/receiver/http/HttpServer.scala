@@ -16,6 +16,7 @@
 
 package com.ubirch.receiver.http
 
+import java.net.URI
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -46,44 +47,82 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
   implicit val timeout: Timeout = Timeout(30, TimeUnit.SECONDS) // scalastyle:off magic.number
 
   def serveHttp(): Unit = {
+    val endpointDescription = {
+      import tapir._
+      // just for documentation purposes, the header is ignored
+      def docHeader(name: String, doc: String, v: Validator[Option[String]] = Validator.pass): EndpointInput[Unit] =
+        header[Option[String]](name)
+          .description(doc)
+          .validate(v)
+          .map(_ => ())(_ => None)
+
+      val cumulocityAuthDocs = "checked for cumulocity auth (only one of {Authorization (header), " +
+        "authorization (cookie), X-XSRF-TOKEN (header)} needed)"
+
+      endpoint
+        .post
+        .description("Anchors the given Ubirch Protocol Packet (passed in as the body, I don't know why swagger ui doesn't show body's description)")
+        .in(headers.description("some headers are propagated further into niomon system... TODO: explain which exactly"))
+        .in(docHeader("X-Ubirch-HardwareId", "the hardware id of the sender device"))
+        .in(docHeader("X-Ubirch-Auth-Type", "auth type",
+          Validator.enum(List("cumulocity", "ubirch", "keycloak").map(Some(_)) :+ None)))
+        .in(docHeader("X-Ubirch-Credential", "checked for ubirch auth"))
+        .in(docHeader("Authorization", cumulocityAuthDocs))
+        .in(docHeader("X-XSRF-TOKEN", cumulocityAuthDocs))
+        .in(cookie[Option[String]]("authorization").description(cumulocityAuthDocs))
+        .in(docHeader("X-Cumulocity-BaseUrl", "change which cumulocity instance is asked for auth"))
+        .in(docHeader("X-Cumulocity-Tenant", "change which cumulocity tenant is asked for auth"))
+        .in(docHeader("X-Niomon-Purge-Caches", "set this header to clean niomon caches (dangerous)"))
+        .in(extractFromRequest(req => req.uri))
+        .in(binaryBody[Array[Byte]].description("Ubirch Protocol Packet to be anchored"))
+        .errorOut(stringBody.description("error details").and(statusCode(500)))
+        .out(binaryBody[Array[Byte]].description("arbitrary response, configurable per device; status code may vary"))
+        .out(statusCode)
+        .out(header[String]("Content-Type").description("actual content type of the response (sadly this cannot be modelled accurately in swagger)"))
+    }
+
     val route: Route = {
-      post {
-        pathEndOrSingleSlash {
-          extractRequest {
-            req =>
-              entity(as[Array[Byte]]) {
-                input =>
-                  requestReceived.inc()
-                  val timer = processingTimer.startTimer()
-                  val requestId = UUID.randomUUID().toString
-                  val headers = getHeaders(req)
-                  log.info(s"HTTP request: ${v("requestId", requestId)} [${v("headers", headers.asJava)}]")
-                  val responseData = dispatcher ? RequestData(requestId, input, headers)
-                  onComplete(responseData) {
-                    case Success(res) =>
-                      val result = res.asInstanceOf[ResponseData]
-                      // ToDo BjB 21.09.18 : Revise Headers
-                      val headers = result.headers
-                      val contentType = determineContentType(headers)
-                      val status = headers.get("http-status-code").map(_.toInt: StatusCode).getOrElse(StatusCodes.OK)
-                      responsesSent.labels(status.toString()).inc()
-                      timer.observeDuration()
-                      complete(HttpResponse(status = status, entity = HttpEntity(contentType, result.data)))
-                    case Failure(e) =>
-                      log.error("dispatcher failure", e)
-                      responsesSent.labels(StatusCodes.InternalServerError.toString()).inc()
-                      timer.observeDuration()
-                      complete((StatusCodes.InternalServerError, e.getMessage))
-                  }
-              }
+      import tapir.server.akkahttp._
+      endpointDescription.toRoute { case (h, authCookie, requestUri, input) =>
+        requestReceived.inc()
+        val timer = processingTimer.startTimer()
+        val requestId = UUID.randomUUID().toString
+        val headers = getHeaders(h, authCookie, requestUri)
+        log.info(s"HTTP request: ${v("requestId", requestId)} [${v("headers", headers.asJava)}]")
+        val responseData = dispatcher ? RequestData(requestId, input, headers)
+        responseData.transform {
+          case Success(res) =>
+            val result = res.asInstanceOf[ResponseData]
+            // ToDo BjB 21.09.18 : Revise Headers
+            val headers = result.headers
+            val contentType = determineContentType(headers)
+            val status = headers.get("http-status-code").map(_.toInt: StatusCode).getOrElse(StatusCodes.OK)
+            responsesSent.labels(status.toString()).inc()
+            timer.observeDuration()
+            Success(Right((result.data, status.intValue(), contentType.toString())))
+          case Failure(e) =>
+            log.error("dispatcher failure", e)
+            responsesSent.labels(StatusCodes.InternalServerError.toString()).inc()
+            timer.observeDuration()
+            Success(Left(e.getMessage))
+        }
+      } ~ get {
+        path("status") {
+          complete("up")
+        } ~ pathPrefix("swagger") {
+          path("swagger.json") {
+            import tapir.docs.openapi._
+            import tapir.openapi.circe.yaml._
+            respondWithHeader(`Content-Type`(MediaType.applicationWithFixedCharset("x-yaml", HttpCharsets.`UTF-8`)))(
+              complete(endpointDescription.toOpenAPI("Niomon HTTP", "1.0.1-SNAPSHOT").toYaml)
+            )
+          } ~ getFromResourceDirectory("swagger") ~ redirectToTrailingSlashIfMissing(StatusCodes.MovedPermanently) {
+            pathSingleSlash {
+              getFromResource("swagger/index.html")
+            }
           }
         }
-      } ~
-        get {
-          path("status") {
-            complete("up")
-          }
-        }
+      }
     }
 
     Http().bindAndHandle(route, "0.0.0.0", port) onComplete {
@@ -108,14 +147,14 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
     "X-Cumulocity-BaseUrl",
     "X-Cumulocity-Tenant",
     "X-Niomon-Purge-Caches"
-  )
+  ).map(_.toLowerCase)
 
-  private def getHeaders(req: HttpRequest): Map[String, String] = {
-    val headersToPreserve = req.headers.filter { h =>
-      HEADERS_TO_PRESERVE.contains(h.name())
-    } ++ req.header[Cookie].flatMap { c => c.cookies.find(_.name == "authorization").map(Cookie(_)) }
+  private def getHeaders(headers: Seq[(String, String)], authCookie: Option[String], requestUri: URI): Map[String, String] = {
+    val headersToPreserve = headers.filter { case (key, _) =>
+      HEADERS_TO_PRESERVE.contains(key.toLowerCase())
+    } ++ authCookie.map(v => "Cookie" -> s"authorization=$v")
 
-    Map("Request-URI" -> req.uri.toString) ++ headersToPreserve.map(h => h.name -> h.value)
+    Map("Request-URI" -> requestUri.toString) ++ headersToPreserve
   }
 }
 
