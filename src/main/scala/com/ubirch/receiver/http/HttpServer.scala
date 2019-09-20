@@ -50,11 +50,11 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
     val endpointDescription = {
       import tapir._
       // just for documentation purposes, the header is ignored
-      def docHeader(name: String, doc: String, v: Validator[Option[String]] = Validator.pass): EndpointInput[Unit] =
+      def docHeader(name: String, doc: String, v: Validator[Option[String]] = Validator.pass): EndpointInput[Option[String]] =
         header[Option[String]](name)
           .description(doc)
           .validate(v)
-          .map(_ => ())(_ => None)
+//          .map(_ => ())(_ => None) // for some reason this breaks akka server
 
       val cumulocityAuthDocs = "checked for cumulocity auth (only one of {Authorization (header), " +
         "authorization (cookie), X-XSRF-TOKEN (header)} needed)"
@@ -63,18 +63,18 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         .post
         .description("Anchors the given Ubirch Protocol Packet (passed in as the body, I don't know why swagger ui doesn't show body's description)")
         .in(headers.description("some headers are propagated further into niomon system... TODO: explain which exactly"))
+        .in(cookie[Option[String]]("authorization").description(cumulocityAuthDocs))
+        .in(extractFromRequest(req => req.uri))
+        .in(binaryBody[Array[Byte]].description("Ubirch Protocol Packet to be anchored"))
         .in(docHeader("X-Ubirch-HardwareId", "the hardware id of the sender device"))
         .in(docHeader("X-Ubirch-Auth-Type", "auth type",
           Validator.enum(List("cumulocity", "ubirch", "keycloak").map(Some(_)) :+ None)))
         .in(docHeader("X-Ubirch-Credential", "checked for ubirch auth"))
         .in(docHeader("Authorization", cumulocityAuthDocs))
         .in(docHeader("X-XSRF-TOKEN", cumulocityAuthDocs))
-        .in(cookie[Option[String]]("authorization").description(cumulocityAuthDocs))
         .in(docHeader("X-Cumulocity-BaseUrl", "change which cumulocity instance is asked for auth"))
         .in(docHeader("X-Cumulocity-Tenant", "change which cumulocity tenant is asked for auth"))
         .in(docHeader("X-Niomon-Purge-Caches", "set this header to clean niomon caches (dangerous)"))
-        .in(extractFromRequest(req => req.uri))
-        .in(binaryBody[Array[Byte]].description("Ubirch Protocol Packet to be anchored"))
         .errorOut(stringBody.description("error details").and(statusCode(500)))
         .out(binaryBody[Array[Byte]].description("arbitrary response, configurable per device; status code may vary"))
         .out(statusCode)
@@ -83,7 +83,13 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
 
     val route: Route = {
       import tapir.server.akkahttp._
-      endpointDescription.toRoute { case (h, authCookie, requestUri, input) =>
+      endpointDescription.toRoute { tup =>
+        // this is like this, because this is a 12-element tuple
+        val h = tup._1
+        val authCookie = tup._2
+        val requestUri = tup._3
+        val input = tup._4
+
         requestReceived.inc()
         val timer = processingTimer.startTimer()
         val requestId = UUID.randomUUID().toString
