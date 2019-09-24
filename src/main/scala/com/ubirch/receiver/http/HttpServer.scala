@@ -119,7 +119,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
           path("swagger.json") {
             import tapir.docs.openapi._
             import tapir.openapi.circe.yaml._
-            respondWithHeader(`Content-Type`(MediaType.applicationWithFixedCharset("x-yaml", HttpCharsets.`UTF-8`)))(
+            respondWithHeaders(`Content-Type`(MediaType.applicationWithFixedCharset("x-yaml", HttpCharsets.`UTF-8`)), `Access-Control-Allow-Origin` *)(
               complete(endpointDescription.toOpenAPI("Niomon HTTP", "1.0.1-SNAPSHOT").toYaml)
             )
           } ~ getFromResourceDirectory("swagger") ~ redirectToTrailingSlashIfMissing(StatusCodes.MovedPermanently) {

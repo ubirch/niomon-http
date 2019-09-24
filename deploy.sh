@@ -51,4 +51,4 @@ ${HELMSH} ${UBIRCH_ENV} install \
     ${HELM_PROJECT_NAME} --namespace ubirch-${UBIRCH_ENV} \
     --name niomon-${HELM_PROJECT_NAME}-${UBIRCH_ENV} --debug \
     -f ${VALUES_FILE} \
-    --set image.tag=${UBIRCH_ENV} $@
+    --set image.tag=latest $@
