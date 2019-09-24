@@ -115,7 +115,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
       HEADERS_TO_PRESERVE.contains(h.name())
     } ++ req.header[Cookie].flatMap { c => c.cookies.find(_.name == "authorization").map(Cookie(_)) }
 
-    Map("Request-URI" -> req.uri.toString) ++ headersToPreserve.map(h => h.name -> h.value)
+    Map("Request-URI" -> req.uri.toString, "Access-Control-Allow-Origin" -> "*") ++ headersToPreserve.map(h => h.name -> h.value)
   }
 }
 
