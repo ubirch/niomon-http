@@ -37,6 +37,7 @@ import net.logstash.logback.argument.StructuredArguments.v
 
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
+import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
 class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSystem) {
