@@ -153,7 +153,10 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
     "X-XSRF-TOKEN",
     "X-Cumulocity-BaseUrl",
     "X-Cumulocity-Tenant",
-    "X-Niomon-Purge-Caches"
+    "X-Niomon-Purge-Caches",
+    "X-Ubirch-Credential",
+    "X-Ubirch-Hardware-Id",
+    "X-Ubirch-Auth-Type"
   ).map(_.toLowerCase)
 
   private def getHeaders(headers: Seq[(String, String)], authCookie: Option[String], requestUri: URI): Map[String, String] = {
