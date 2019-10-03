@@ -67,7 +67,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         .in(cookie[Option[String]]("authorization").description(cumulocityAuthDocs))
         .in(extractFromRequest(req => req.uri))
         .in(binaryBody[Array[Byte]].description("Ubirch Protocol Packet to be anchored"))
-        .in(docHeader("X-Ubirch-HardwareId", "the hardware id of the sender device"))
+        .in(docHeader("X-Ubirch-Hardware-Id", "the hardware id of the sender device"))
         .in(docHeader("X-Ubirch-Auth-Type", "auth type",
           Validator.enum(List("cumulocity", "ubirch", "keycloak").map(Some(_)) :+ None)))
         .in(docHeader("X-Ubirch-Credential", "checked for ubirch auth"))
