@@ -95,7 +95,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         val timer = processingTimer.startTimer()
         val requestId = UUID.randomUUID().toString
         val headers = getHeaders(h, authCookie, requestUri)
-        log.info(s"HTTP request: ${v("requestId", requestId)} [${v("headers", headers.asJava)}]")
+        log.info(s"HTTP request: {} [{}]", v("requestId", requestId), v("headers", headers.asJava))
         val responseData = dispatcher ? RequestData(requestId, input, headers)
         responseData.transform {
           case Success(res) =>
