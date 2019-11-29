@@ -18,29 +18,20 @@ deployment strategy in kubernetes.
 **Basic workflow**
 1. For each incoming request a `requestId` is generated. 
 2. The http `Route` is handing the request data to the `Dispatcher` actor.
-3. the `Dispatcher` creates a `HttpRequestHandler` with a reference to the `Route` for each request, registers it in the `Registry` and sends
+3. the `Dispatcher` creates a `HttpRequestHandler` with a reference to the `Route` for each request, and sends
 the request data to it.
-4. the `HttpRequestHandler` sends the request data to the `KafkaPublisher` and waits for response data.
+4. the `HttpRequestHandler` adds a serialized reference to itself as a kafka header, sends the request data to the 
+`KafkaPublisher` and waits for response data.
 5. `KafkaPublisher` is sending the data to the `incoming` topic
 6. `KafkaListener` is consuming the `outgoing` topic
 7. when response data arrives, `KafkaListener` is sending it to the `Dispatcher`
-8. `Dispatcher` resolves the according `HttpRequestHandler` based on the `requestId` via the `Registry`
+8. `Dispatcher` resolves the according `HttpRequestHandler` by deserializing the actor ref attached to the response
 9. `Dispatcher` sends response data to the `HttpRequestHandler` (which is waiting for that since step 5.)
 10. `HttpRequestHandler` sends the response data back to the `Route` 
 11. `Route` is responding the http request with the response data
-12. `HttpRequestHandler` unregisters itself in the `Registry` (which causes `Registry` to stop it)
 
 **Cluster Details**
-
-* when running as cluster, at least 2 (better 3) nodes (instances/pods) have to run. 
-* those nodes act as `akka-cluster-seed-nodes` for managing the cluster
-* registration (above step 5.) of `HttpRequestHandler` is done via the `ClusterAwareRegistry` which delegates to `Reqistry` and 
-publishes the registration via `akka.cluster.pubsub` to the other nodes in the cluster. This is done 
-to resolve (above step 8.) the according `HttpRequestHandler` for response data from kafka, because of the 
-fact that the response data might not arrive on the same node as the node which has to respond the request. 
-* `ClusterListener` listens for new members joining the cluster. Whenever that happens it lets `ClusterAwareRegistry` 
-publish all known `HttpRequestHandler` registrations to all nodes. This leads to every `Registry` knowing 
-all registrations.
+The cluster uses kubernetes for autodiscovery of its members.
 
 **Notes on Kafka**
 
