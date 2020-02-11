@@ -179,6 +179,10 @@ object HttpServer {
     .register()
 
   val processingTimer: Summary = Summary
-    .build("processing_time", "Message processing time in seconds")
+    .build("processing_time_seconds", "Message processing time in seconds")
+    .quantile(0.9, 0.05)
+    .quantile(0.95, 0.05)
+    .quantile(0.99, 0.05)
+    .quantile(0.999, 0.05)
     .register()
 }
