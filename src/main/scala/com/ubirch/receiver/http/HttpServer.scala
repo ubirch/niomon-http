@@ -31,6 +31,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
 import com.ubirch.receiver.actors.{RequestData, ResponseData}
+import com.ubirch.receiver.conf.HeaderKeys
 import com.ubirch.receiver.http.HttpServer._
 import io.prometheus.client.{Counter, Summary}
 import net.logstash.logback.argument.StructuredArguments.v
@@ -70,7 +71,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         .in(docHeader("X-Ubirch-Hardware-Id", "the hardware id of the sender device"))
         .in(docHeader("X-Ubirch-Auth-Type", "auth type",
           Validator.enum(List("cumulocity", "ubirch", "keycloak").map(Some(_)) :+ None)))
-        .in(docHeader("X-Ubirch-Credential", "checked for ubirch auth"))
+        .in(docHeader(HeaderKeys.XUBIRCHCREDENTIAL, "checked for ubirch auth"))
         .in(docHeader("Authorization", cumulocityAuthDocs))
         .in(docHeader("X-XSRF-TOKEN", cumulocityAuthDocs))
         .in(docHeader("X-Cumulocity-BaseUrl", "change which cumulocity instance is asked for auth"))
@@ -164,7 +165,10 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
       HEADERS_TO_PRESERVE.contains(key.toLowerCase())
     } ++ authCookie.map(v => "Cookie" -> s"authorization=$v")
 
-    Map("Request-URI" -> requestUri.toString) ++ headersToPreserve
+    val r = Map("Request-URI" -> requestUri.toString) ++ headersToPreserve
+    r.map { h =>
+      (h._1.toLowerCase -> h._2)
+    }
   }
 }
 
