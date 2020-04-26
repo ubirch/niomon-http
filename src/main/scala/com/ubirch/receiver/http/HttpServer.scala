@@ -47,6 +47,18 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val timeout: Timeout = Timeout(30, TimeUnit.SECONDS) // scalastyle:off magic.number
 
+  object HeaderKeys {
+    val XUBIRCHCREDENTIAL = "X-Ubirch-Credential".toLowerCase;
+    val XUBIRCHHARDWAREID = "X-Ubirch-Hardware-Id".toLowerCase;
+    val XUBIRCHAUTHTYPE = "X-Ubirch-Auth-Type".toLowerCase;
+    val AUTHORIZATION = "Authorization".toLowerCase;
+    val XXSRFTOKEN = "X-XSRF-TOKEN".toLowerCase;
+    val XCUMULOCITYBASEURL = "X-Cumulocity-BaseUrl".toLowerCase;
+    val XCUMULOCITYTENANT = "X-Cumulocity-Tenant".toLowerCase;
+    val XNIOMONPURGECACHES = "X-Niomon-Purge-Caches".toLowerCase;
+    val CONTENTTYPE = "Content-Type".toLowerCase;
+  }
+
   def serveHttp(): Unit = {
     val endpointDescription = {
       import tapir._
@@ -67,19 +79,19 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         .in(cookie[Option[String]]("authorization").description(cumulocityAuthDocs))
         .in(extractFromRequest(req => req.uri))
         .in(binaryBody[Array[Byte]].description("Ubirch Protocol Packet to be anchored"))
-        .in(docHeader("X-Ubirch-Hardware-Id", "the hardware id of the sender device"))
-        .in(docHeader("X-Ubirch-Auth-Type", "auth type",
+        .in(docHeader(HeaderKeys.XUBIRCHHARDWAREID, "the hardware id of the sender device"))
+        .in(docHeader(HeaderKeys.XUBIRCHAUTHTYPE, "auth type",
           Validator.enum(List("cumulocity", "ubirch", "keycloak").map(Some(_)) :+ None)))
-        .in(docHeader("X-Ubirch-Credential", "checked for ubirch auth"))
-        .in(docHeader("Authorization", cumulocityAuthDocs))
-        .in(docHeader("X-XSRF-TOKEN", cumulocityAuthDocs))
-        .in(docHeader("X-Cumulocity-BaseUrl", "change which cumulocity instance is asked for auth"))
-        .in(docHeader("X-Cumulocity-Tenant", "change which cumulocity tenant is asked for auth"))
-        .in(docHeader("X-Niomon-Purge-Caches", "set this header to clean niomon caches (dangerous)"))
+        .in(docHeader(HeaderKeys.XUBIRCHCREDENTIAL, "checked for ubirch auth"))
+        .in(docHeader(HeaderKeys.AUTHORIZATION, cumulocityAuthDocs))
+        .in(docHeader(HeaderKeys.XXSRFTOKEN, cumulocityAuthDocs))
+        .in(docHeader(HeaderKeys.XCUMULOCITYBASEURL, "change which cumulocity instance is asked for auth"))
+        .in(docHeader(HeaderKeys.XCUMULOCITYTENANT, "change which cumulocity tenant is asked for auth"))
+        .in(docHeader(HeaderKeys.XNIOMONPURGECACHES, "set this header to clean niomon caches (dangerous)"))
         .errorOut(stringBody.description("error details").and(statusCode(500)))
         .out(binaryBody[Array[Byte]].description("arbitrary response, configurable per device; status code may vary"))
         .out(statusCode)
-        .out(header[String]("Content-Type").description("actual content type of the response (sadly this cannot be modelled accurately in swagger)"))
+        .out(header[String](HeaderKeys.CONTENTTYPE).description("actual content type of the response (sadly this cannot be modelled accurately in swagger)"))
     }
 
     val route: Route = {
@@ -148,15 +160,15 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
   }
 
   private val HEADERS_TO_PRESERVE = Array( // excludes Cookie header, because we only want one specific cookie
-    "Content-Type",
-    "Authorization",
-    "X-XSRF-TOKEN",
-    "X-Cumulocity-BaseUrl",
-    "X-Cumulocity-Tenant",
-    "X-Niomon-Purge-Caches",
-    "X-Ubirch-Credential",
-    "X-Ubirch-Hardware-Id",
-    "X-Ubirch-Auth-Type"
+    HeaderKeys.CONTENTTYPE,
+    HeaderKeys.AUTHORIZATION,
+    HeaderKeys.XXSRFTOKEN,
+    HeaderKeys.XCUMULOCITYBASEURL,
+    HeaderKeys.XCUMULOCITYTENANT,
+    HeaderKeys.XNIOMONPURGECACHES,
+    HeaderKeys.XUBIRCHCREDENTIAL,
+    HeaderKeys.XUBIRCHHARDWAREID,
+    HeaderKeys.XUBIRCHAUTHTYPE
   ).map(_.toLowerCase)
 
   private def getHeaders(headers: Seq[(String, String)], authCookie: Option[String], requestUri: URI): Map[String, String] = {
