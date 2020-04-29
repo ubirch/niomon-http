@@ -23,12 +23,12 @@ import akka.actor.ActorRef
 import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.KafkaConsumer.Conf
 import com.typesafe.scalalogging.Logger
+import com.ubirch.kafka._
+import com.ubirch.niomon.healthcheck.{Checks, HealthCheckServer}
 import com.ubirch.receiver.actors.ResponseData
 import org.apache.kafka.clients.consumer.{ConsumerRecords, OffsetResetStrategy}
 import org.apache.kafka.common.errors.WakeupException
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, StringDeserializer}
-import com.ubirch.kafka._
-import com.ubirch.niomon.healthcheck.{Checks, HealthCheckServer}
 
 import scala.collection.JavaConverters._
 import scala.util.{Failure, Success, Try}

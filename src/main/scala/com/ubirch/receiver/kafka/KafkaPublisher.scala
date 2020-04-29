@@ -18,10 +18,10 @@ package com.ubirch.receiver.kafka
 
 import cakesolutions.kafka.KafkaProducer
 import cakesolutions.kafka.KafkaProducer.Conf
-import org.apache.kafka.clients.producer.{ProducerRecord, RecordMetadata}
-import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 import com.ubirch.kafka.RichAnyProducerRecord
 import com.ubirch.niomon.healthcheck.{Checks, HealthCheckServer}
+import org.apache.kafka.clients.producer.{ProducerRecord, RecordMetadata}
+import org.apache.kafka.common.serialization.{ByteArraySerializer, StringSerializer}
 
 import scala.concurrent.{ExecutionContext, Future}
 
