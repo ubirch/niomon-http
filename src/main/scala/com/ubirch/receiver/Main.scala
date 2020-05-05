@@ -30,6 +30,8 @@ import com.ubirch.receiver.kafka.{KafkaListener, KafkaPublisher}
 import io.prometheus.client.exporter.{HTTPServer => PrometheusHttpServer}
 import io.prometheus.client.hotspot.DefaultExports
 
+import scala.concurrent.ExecutionContext
+
 object Main extends LazyLogging {
   val DEPLOYMENT_MODE_ENV = "DEPLOYMENT_MODE"
 
@@ -63,15 +65,22 @@ object Main extends LazyLogging {
   private def createActorSystem(isCluster: Boolean) = {
     val system = ActorSystem("niomon-http")
     if (isCluster) {
+
+      import scala.concurrent.duration._
+      import scala.language.postfixOps
+
       val requiredContactPoints = config.getInt("akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr")
 
       logger.info("Starting cluster - required-contact-point-nr={}", requiredContactPoints)
 
+      implicit val context: ExecutionContext = system.dispatcher
+
       val cluster = Cluster(system)
       val clusterStateMonitor = system.actorOf(ClusterStateMonitor.props, "ClusterStateMonitor")
 
-      cluster.subscribe(clusterStateMonitor, classOf[MemberEvent], classOf[UnreachableMember])
-
+      system.scheduler.schedule(30 seconds, 15 seconds){
+        cluster.sendCurrentClusterState(clusterStateMonitor)
+      }
 
       AkkaManagement(system).start()
       ClusterBootstrap(system).start()
