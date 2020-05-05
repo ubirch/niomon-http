@@ -21,6 +21,7 @@ import akka.cluster.Cluster
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.niomon.healthcheck.{Checks, HealthCheckServer}
 import com.ubirch.receiver.actors.Dispatcher
 import com.ubirch.receiver.http.HttpServer
@@ -28,7 +29,7 @@ import com.ubirch.receiver.kafka.{KafkaListener, KafkaPublisher}
 import io.prometheus.client.exporter.{HTTPServer => PrometheusHttpServer}
 import io.prometheus.client.hotspot.DefaultExports
 
-object Main {
+object Main extends LazyLogging {
   val DEPLOYMENT_MODE_ENV = "DEPLOYMENT_MODE"
 
   val KAFKA_URL_PROPERTY = "kafka.url"
@@ -36,9 +37,10 @@ object Main {
   val KAFKA_TOPIC_OUTGOING_PROPERTY = "kafka.topic.outgoing"
   val HTTP_PORT_PROPERTY = "http.port"
 
+  private val config: Config = ConfigFactory.load()
+
   def main(args: Array[String]): Unit = {
     val isCluster = sys.env.get(DEPLOYMENT_MODE_ENV).forall(!_.equalsIgnoreCase("local"))
-    val config: Config = ConfigFactory.load()
 
     initPrometheus(config.getConfig("prometheus"))
     val healthCheckServer = initHealthCheckServer(config.getConfig("health-check"))
@@ -58,15 +60,16 @@ object Main {
   }
 
   private def createActorSystem(isCluster: Boolean) = {
+    val system = ActorSystem("niomon-http")
     if (isCluster) {
-      val system = ActorSystem("niomon-http")
+      val requiredContactPoints = config.getInt("akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr")
+      logger.info("Starting cluster - required-contact-point-nr={}", requiredContactPoints)
       Cluster(system)
       AkkaManagement(system).start()
       ClusterBootstrap(system).start()
-
       system
     } else {
-      ActorSystem("niomon-http")
+      system
     }
   }
 
