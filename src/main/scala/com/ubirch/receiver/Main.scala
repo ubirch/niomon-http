@@ -18,12 +18,13 @@ package com.ubirch.receiver
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.cluster.Cluster
+import akka.cluster.ClusterEvent.{MemberEvent, UnreachableMember}
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import com.typesafe.config.{Config, ConfigFactory}
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.niomon.healthcheck.{Checks, HealthCheckServer}
-import com.ubirch.receiver.actors.Dispatcher
+import com.ubirch.receiver.actors.{ClusterStateMonitor, Dispatcher}
 import com.ubirch.receiver.http.HttpServer
 import com.ubirch.receiver.kafka.{KafkaListener, KafkaPublisher}
 import io.prometheus.client.exporter.{HTTPServer => PrometheusHttpServer}
@@ -63,8 +64,15 @@ object Main extends LazyLogging {
     val system = ActorSystem("niomon-http")
     if (isCluster) {
       val requiredContactPoints = config.getInt("akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr")
+
       logger.info("Starting cluster - required-contact-point-nr={}", requiredContactPoints)
-      Cluster(system)
+
+      val cluster = Cluster(system)
+      val clusterStateMonitor = system.actorOf(ClusterStateMonitor.props, "ClusterStateMonitor")
+      cluster.registerOnMemberUp {
+        cluster.subscribe(clusterStateMonitor, classOf[MemberEvent], classOf[UnreachableMember])
+      }
+
       AkkaManagement(system).start()
       ClusterBootstrap(system).start()
       system
