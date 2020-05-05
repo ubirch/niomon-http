@@ -77,7 +77,7 @@ object Main extends LazyLogging {
       val cluster = Cluster(system)
       val clusterStateMonitor = system.actorOf(ClusterStateMonitor.props, "ClusterStateMonitor")
 
-      system.scheduler.schedule(30 seconds, 15 seconds){
+      system.scheduler.schedule(60 seconds, 60 seconds){
         cluster.sendCurrentClusterState(clusterStateMonitor)
       }
 
