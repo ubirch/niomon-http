@@ -18,7 +18,6 @@ package com.ubirch.receiver
 
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent.{MemberEvent, UnreachableMember}
 import akka.management.cluster.bootstrap.ClusterBootstrap
 import akka.management.scaladsl.AkkaManagement
 import com.typesafe.config.{Config, ConfigFactory}
