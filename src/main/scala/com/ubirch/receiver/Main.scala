@@ -69,9 +69,9 @@ object Main extends LazyLogging {
 
       val cluster = Cluster(system)
       val clusterStateMonitor = system.actorOf(ClusterStateMonitor.props, "ClusterStateMonitor")
-      cluster.registerOnMemberUp {
-        cluster.subscribe(clusterStateMonitor, classOf[MemberEvent], classOf[UnreachableMember])
-      }
+
+      cluster.subscribe(clusterStateMonitor, classOf[MemberEvent], classOf[UnreachableMember])
+
 
       AkkaManagement(system).start()
       ClusterBootstrap(system).start()
