@@ -306,3 +306,5 @@ log and Prometheus. This actors reports the following facts:
 
 Additionally, the actor is subscribed to a set of cluster events, namely: LeaderChanged, MemberUp and MemberJoined: Every 
 time the current node detects such a change in the cluster, it logs this occurrence.
+
+![Event Log Components](https://raw.githubusercontent.com/ubirch/niomon-http/master/grafana_example.png "Cluster Monitoring")
