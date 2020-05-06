@@ -4,10 +4,15 @@ import java.net.InetAddress
 
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.cluster.ClusterEvent.CurrentClusterState
+import com.typesafe.config.Config
 import io.prometheus.client.Gauge
 
-class ClusterStateMonitor extends Actor with ActorLogging {
+class ClusterStateMonitor(config: Config) extends Actor with ActorLogging {
   import ClusterStateMonitor._
+
+  private val requiredContactPoints = config.getInt("akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr")
+
+  log.info("Starting Cluster State Monitor - required-contact-point-nr={}", requiredContactPoints)
 
   override def receive: Receive = {
     case state: CurrentClusterState =>
@@ -31,6 +36,7 @@ class ClusterStateMonitor extends Actor with ActorLogging {
       leaderGauge.set(leaderSize.toDouble)
       membersGauge.set(membersSize.toDouble)
       unreachableGauge.set(unreachableSize.toDouble)
+      configuredRequiredContactPoints.set(requiredContactPoints.toDouble)
 
   }
 
@@ -54,5 +60,10 @@ object ClusterStateMonitor {
     .build("akka_cluster_unreachable", "Akka Cluster Unreachable Members")
     .register()
 
-  val props = Props[ClusterStateMonitor]
+  val configuredRequiredContactPoints: Gauge = Gauge
+    .build("akka_cluster_configured_req_contact_pts", "Akka Cluster Configured Required Contact Points")
+    .register()
+
+  def props(config: Config): Props = Props(new ClusterStateMonitor(config))
+
 }

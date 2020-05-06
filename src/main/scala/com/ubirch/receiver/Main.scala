@@ -30,6 +30,8 @@ import io.prometheus.client.exporter.{HTTPServer => PrometheusHttpServer}
 import io.prometheus.client.hotspot.DefaultExports
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 object Main extends LazyLogging {
   val DEPLOYMENT_MODE_ENV = "DEPLOYMENT_MODE"
@@ -65,24 +67,17 @@ object Main extends LazyLogging {
     val system = ActorSystem("niomon-http")
     if (isCluster) {
 
-      import scala.concurrent.duration._
-      import scala.language.postfixOps
-
-      val requiredContactPoints = config.getInt("akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr")
-
-      logger.info("Starting cluster - required-contact-point-nr={}", requiredContactPoints)
-
       implicit val context: ExecutionContext = system.dispatcher
 
       val cluster = Cluster(system)
-      val clusterStateMonitor = system.actorOf(ClusterStateMonitor.props, "ClusterStateMonitor")
-
+      val clusterStateMonitor = system.actorOf(ClusterStateMonitor.props(config), "ClusterStateMonitor")
       system.scheduler.schedule(60 seconds, 60 seconds){
         cluster.sendCurrentClusterState(clusterStateMonitor)
       }
 
       AkkaManagement(system).start()
       ClusterBootstrap(system).start()
+
       system
     } else {
       system
