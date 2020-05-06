@@ -124,3 +124,167 @@ Two sample requests against the two nodes can look like this:
 ## Deployment in kubernetes
 
 **TBD**
+
+## Akka cluster monitoring
+
+This project contains two sets of tools to support akka clustering monitoring. The first one is a set of scripts that allow
+to monitor the state of the akka cluster through jmx. 
+
+### JMX
+
+These tools are located under the folder 'scripts'. 
+
+**cluster_leader.sh**: It returns the current leader in the cluster.
+ 
+**cluster_members.sh**: It returns the current members seen by the current node.
+
+cluster_pods.sh: It returns the current pods that have been deployed. The result is sorted by IP. This is particularly helpful as the
+smaller IP is usually the one selected as the leader when the cluster is being formed. That is to say, that is very likely that
+the first pod is the current leader. You can double confirm this by running the 'cluster_leader' script.
+
+**cluster_seed_nodes.sh**: It returns a list current seed nodes and their status as seen by the current node.
+ 
+**cluster_status.sh**: It returns the current status of cluster.
+
+**forward_akka_mng_any.sh**: It queries for the current deployed pods and randomly selects one and starts port forwarding the akka management port. 8558.
+
+**forward_any.sh**: It queries for the current deployed pods and randomly selects one and starts port forwarding on the provided port number.
+
+**forward_jmx_any.sh**: It queries for the current deployed pods and randomly selects one and starts port forwarding the java jmx port: 9010.
+
+
+**Note:** In order to use one or more of the monitoring scripts, the corresponding port forwarding should have been started.
+
+cluster_leader.sh, cluster_members, cluster_status depend on the forward_jmx_any script. 
+cluster_seed_nodes depends on forward_akka_mng_any 
+
+#### Example
+
+_Start Port-forwarding_
+
+```bash
+carlos@saturn:~/sources/ubirch/niomon-all/niomon/http/scripts$ ./forward_jmx_any.sh dev ubirch-dev
+Forwarding - "niomon-http-deployment-75b64ff4b-mbjkm" @ "10.244.0.63" - leader=yes
+Forwarding from 127.0.0.1:9010 -> 9010
+Forwarding from [::1]:9010 -> 9010
+```
+
+_Get leader_
+
+```bash
+carlos@saturn:~/sources/ubirch/niomon-all/niomon/http/scripts$ ./cluster_leader.sh dev ubirch-dev
+Leader = akka.tcp://niomon-http@10.244.0.63:2551;
+```
+
+_Get members_
+
+```bash
+carlos@saturn:~/sources/ubirch/niomon-all/niomon/http/scripts$ ./cluster_members.sh dev ubirch-dev
+Members = akka.tcp://niomon-http@10.244.0.63:2551,akka.tcp://niomon-http@10.244.1.77:2551,akka.tcp://niomon-http@10.244.2.111:2551;
+```
+
+_Get current cluster status_
+
+```bash
+carlos@saturn:~/sources/ubirch/niomon-all/niomon/http/scripts$ ./cluster_status.sh dev ubirch-dev
+ClusterStatus = {
+  "members": [
+    {
+      "address": "akka.tcp://niomon-http@10.244.0.63:2551",
+      "roles": [
+        "dc-default"
+      ],
+      "status": "Up"
+    },
+    {
+      "address": "akka.tcp://niomon-http@10.244.1.77:2551",
+      "roles": [
+        "dc-default"
+      ],
+      "status": "Up"
+    },
+    {
+      "address": "akka.tcp://niomon-http@10.244.2.111:2551",
+      "roles": [
+        "dc-default"
+      ],
+      "status": "Up"
+    }
+  ],
+  "self-address": "akka.tcp://niomon-http@10.244.0.63:2551",
+  "unreachable": []
+}
+;
+```
+
+_Start Port-forwarding_
+
+```bash
+carlos@saturn:~/sources/ubirch/niomon-all/niomon/http/scripts$ ./forward_akka_mng_any.sh dev ubirch-dev
+Forwarding - "niomon-http-deployment-75b64ff4b-b4lcp" @ "10.244.1.77" - leader=no
+Forwarding from 127.0.0.1:8558 -> 8558
+Forwarding from [::1]:8558 -> 8558
+```
+
+_Get pods_
+
+```bash
+carlos@saturn:~/sources/ubirch/niomon-all/niomon/http/scripts$ ./cluster_pods.sh dev ubirch-dev
+[
+  {
+    "namespace": "ubirch-dev",
+    "pod": "niomon-http-deployment-75b64ff4b-mbjkm",
+    "podIP": "10.244.0.63",
+    "phase": "Running"
+  },
+  {
+    "namespace": "ubirch-dev",
+    "pod": "niomon-http-deployment-75b64ff4b-b4lcp",
+    "podIP": "10.244.1.77",
+    "phase": "Running"
+  },
+  {
+    "namespace": "ubirch-dev",
+    "pod": "niomon-http-deployment-75b64ff4b-fbbst",
+    "podIP": "10.244.2.111",
+    "phase": "Running"
+  }
+]
+```
+
+_Get seed nodes_
+
+```bash
+carlos@saturn:~/sources/ubirch/niomon-all/niomon/http/scripts$ ./cluster_seed_nodes.sh dev ubirch-dev
+{
+  "seedNodes": [
+    {
+      "node": "akka.tcp://niomon-http@10.244.0.63:2551",
+      "nodeUid": 849117139,
+      "roles": [
+        "dc-default"
+      ],
+      "status": "Up"
+    },
+    {
+      "node": "akka.tcp://niomon-http@10.244.1.77:2551",
+      "nodeUid": -947453988,
+      "roles": [
+        "dc-default"
+      ],
+      "status": "Up"
+    },
+    {
+      "node": "akka.tcp://niomon-http@10.244.2.111:2551",
+      "nodeUid": -1949926541,
+      "roles": [
+        "dc-default"
+      ],
+      "status": "Up"
+    }
+  ],
+  "selfNode": "akka.tcp://niomon-http@10.244.1.77:2551"
+}
+```
+
+
