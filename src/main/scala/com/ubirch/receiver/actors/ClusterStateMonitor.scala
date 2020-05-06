@@ -3,9 +3,6 @@ package com.ubirch.receiver.actors
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.cluster.ClusterEvent.CurrentClusterState
 import io.prometheus.client.Gauge
-import net.logstash.logback.argument.StructuredArguments.v
-
-import scala.collection.JavaConverters._
 
 class ClusterStateMonitor extends Actor with ActorLogging {
   import ClusterStateMonitor._
@@ -17,11 +14,12 @@ class ClusterStateMonitor extends Actor with ActorLogging {
       val membersSize = state.members.size
       val unreachableSize = state.unreachable.size
 
-      log.info("cluster_leader={} cluster_members_count={} cluster_unreachable_members={} cluster_members={}",
-        v("cluster_leader", state.leader.map(_.toString).getOrElse("None")),
-        v("cluster_size", membersSize),
-        v("cluster_member_unreachable", unreachableSize),
-        v("cluster_members", state.members.map(_.toString()).toList.asJava))
+      log.info("cluster_leader={} cluster_members_size={} cluster_members={} cluster_unreachable_members={}",
+        state.leader.map(_.toString).getOrElse("None"),
+        membersSize,
+        state.members.map(_.toString()).toList,
+        unreachableSize
+      )
 
       leaderGauge.set(leaderSize.toDouble)
       membersGauge.set(membersSize.toDouble)
