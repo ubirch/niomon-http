@@ -3,16 +3,31 @@ package com.ubirch.receiver.actors
 import java.net.InetAddress
 
 import akka.actor.{Actor, ActorLogging, Props}
-import akka.cluster.ClusterEvent.CurrentClusterState
+import akka.cluster.Cluster
+import akka.cluster.ClusterEvent.{CurrentClusterState, LeaderChanged, MemberJoined, MemberUp}
 import com.typesafe.config.Config
 import io.prometheus.client.Gauge
 
-class ClusterStateMonitor(config: Config) extends Actor with ActorLogging {
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
+class ClusterStateMonitor(cluster: Cluster, config: Config) extends Actor with ActorLogging {
   import ClusterStateMonitor._
 
   private val requiredContactPoints = config.getInt("akka.management.cluster.bootstrap.contact-point-discovery.required-contact-point-nr")
 
   log.info("Starting Cluster State Monitor - required-contact-point-nr={}", requiredContactPoints)
+
+  override def preStart(): Unit = {
+    implicit val ec: ExecutionContext = context.dispatcher
+
+    context.system.scheduler.schedule(60 seconds, 60 seconds){
+      cluster.sendCurrentClusterState(self)
+    }
+    cluster.subscribe(self, classOf[LeaderChanged], classOf[MemberUp], classOf[MemberJoined])
+  }
+  override def postStop(): Unit = cluster.unsubscribe(self)
 
   override def receive: Receive = {
     case state: CurrentClusterState =>
@@ -37,6 +52,15 @@ class ClusterStateMonitor(config: Config) extends Actor with ActorLogging {
       membersGauge.set(membersSize.toDouble)
       unreachableGauge.set(unreachableSize.toDouble)
       configuredRequiredContactPoints.set(requiredContactPoints.toDouble)
+
+    case LeaderChanged(leader) =>
+      log.info("leader_changed_detected={}", leader.map(_.toString).getOrElse("Not found"))
+
+    case MemberUp(member) =>
+      log.info("member_up_detected={}", member.toString())
+
+    case MemberJoined(member) =>
+      log.info("member_joined_detected={}", member.toString())
 
   }
 
@@ -64,6 +88,6 @@ object ClusterStateMonitor {
     .build("akka_cluster_configured_req_contact_pts", "Akka Cluster Configured Required Contact Points")
     .register()
 
-  def props(config: Config): Props = Props(new ClusterStateMonitor(config))
+  def props(cluster: Cluster, config: Config): Props = Props(new ClusterStateMonitor(cluster, config))
 
 }
