@@ -287,4 +287,22 @@ carlos@saturn:~/sources/ubirch/niomon-all/niomon/http/scripts$ ./cluster_seed_no
 }
 ```
 
+### Cluster Monitor - Prometheus
 
+An actor called ClusterStateMonitor has been added/integrated into the life cicle of the application 
+to support getting a snapshot of the current cluster state and to be notified to a set of 
+ClusterDomainEvent event too. This actor is Prometheus-enabled. It has a set of gauges that are reporting 
+the current state observations. Its corresponding dashboard has been added to the reposistory as well. It can be
+located under dashboards.
+
+This actor asks for the current cluster state every 60s. When it reads the data, it uses reports it through a 
+log and Prometheus. This actors reports the following facts:
+
+1. akka_cluster_leader: A gauge whose value is set to 1 or 0. It is set to 1 if its current state has a leader, otherwise, it is 0.
+2. akka_cluster_is_leader: A gauge whose value is set to 1 or 0. It is set to 1 if it is currently the leader of the cluster.
+3. akka_cluster_members: A gauge that sets the current number of seen members.
+4. akka_cluster_unreachable: A gauge that sets the current number of unreachable seen members.
+5. akka_cluster_configured_req_contact_pts: A gauge that sets the default number required as contact points.
+
+Additionally, the actor is subscribed to a set of cluster events, namely: LeaderChanged, MemberUp and MemberJoined: Every 
+time the current node detects such a change in the cluster, it logs this occurrence.
