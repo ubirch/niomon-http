@@ -1,5 +1,7 @@
 package com.ubirch.receiver.actors
 
+import java.net.InetAddress
+
 import akka.actor.{Actor, ActorLogging, Props}
 import akka.cluster.ClusterEvent.CurrentClusterState
 import io.prometheus.client.Gauge
@@ -21,6 +23,11 @@ class ClusterStateMonitor extends Actor with ActorLogging {
         unreachableSize
       )
 
+      val localhost: InetAddress = InetAddress.getLocalHost
+      val localIpAddress: String = localhost.getHostAddress
+      val isLeader = state.leader.filter(x => x.toString.contains(localIpAddress)).map(_ => 1).getOrElse(0)
+
+      isLeaderGauge.set(isLeader.toDouble)
       leaderGauge.set(leaderSize.toDouble)
       membersGauge.set(membersSize.toDouble)
       unreachableGauge.set(unreachableSize.toDouble)
@@ -33,6 +40,10 @@ object ClusterStateMonitor {
 
   val leaderGauge: Gauge = Gauge
     .build("akka_cluster_leader", "Akka Cluster Leader")
+    .register()
+
+  val isLeaderGauge: Gauge = Gauge
+    .build("akka_cluster_is_leader", "Akka Cluster Is Leader")
     .register()
 
   val membersGauge: Gauge = Gauge
