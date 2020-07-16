@@ -49,12 +49,9 @@ class KafkaListener(kafkaUrl: String, topics: Seq[String], dispatcher: ActorRef,
   def run(): Unit = {
     subscribe()
     while (running.get) {
-      {
-        val records = pollRecords
-        records match {
-          case Success(rcds) => deliver(rcds)
-          case Failure(ex) => handleError(ex)
-        }
+      pollRecords match {
+        case Success(rcds) => deliver(rcds)
+        case Failure(ex) => handleError(ex)
       }
     }
     consumer.close()
@@ -70,9 +67,9 @@ class KafkaListener(kafkaUrl: String, topics: Seq[String], dispatcher: ActorRef,
   }
 
   private def deliver(rcds: ConsumerRecords[String, Array[Byte]]): Unit = {
-    rcds.iterator().forEachRemaining(record => {
+    rcds.iterator().forEachRemaining { record =>
       dispatcher ! ResponseData(record.key(), record.headersScala, record.value())
-    })
+    }
   }
 
   private def handleError(ex: Throwable): Unit = {
