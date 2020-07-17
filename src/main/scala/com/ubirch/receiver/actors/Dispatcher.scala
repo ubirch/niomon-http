@@ -47,8 +47,7 @@ class Dispatcher(handlerCreator: HttpRequestHandlerCreator) extends Actor with D
   override def receive: Receive = {
     case req: RequestData =>
       log.debug(s"received request with requestId [${req.requestId}]")
-      val reqHandler = handlerCreator(context, sender(), req.requestId)
-      reqHandler ! req
+      handlerCreator(context, sender(), req.requestId) ! req
 
     case resp: ResponseData =>
       log.debug(s"responding to requestId [${resp.requestId}]")

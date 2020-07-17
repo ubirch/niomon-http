@@ -68,7 +68,7 @@ class KafkaListener(kafkaUrl: String, topics: Seq[String], dispatcher: ActorRef,
 
   private def deliver(rcds: ConsumerRecords[String, Array[Byte]]): Unit = {
     rcds.iterator().forEachRemaining { record =>
-      dispatcher ! ResponseData(record.key(), record.headersScala, record.value())
+      dispatcher ! ResponseData(record.requestIdHeader().orNull, record.headersScala, record.value())
     }
   }
 

@@ -27,19 +27,21 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class KafkaPublisher(kafkaUrl: String, topic: String, healthCheckServer: HealthCheckServer) {
 
-  val producer = KafkaProducer(
+  val producer: KafkaProducer[String, Array[Byte]] = KafkaProducer(
     Conf(new StringSerializer(),
       new ByteArraySerializer(),
       bootstrapServers = kafkaUrl,
-      acks = "all")
+      acks = "all"
+    )
   )
 
   healthCheckServer.setReadinessCheck(Checks.kafka("kafka-producer", producer.producer, connectionCountMustBeNonZero = false))
 
-  def send(key: String, payload: Array[Byte], headers: Map[String, String])(implicit ec: ExecutionContext): Future[PublisherSuccess] = {
-    val record = new ProducerRecord(topic, null, key, payload).withHeaders(headers.toSeq: _*)
-
-    producer.send(record).transform(PublisherSuccess(_, key), PublisherException(_, key))
+  def send(requestId: String, payload: Array[Byte], headers: Map[String, String])(implicit ec: ExecutionContext): Future[PublisherSuccess] = {
+    val record = new ProducerRecord[String, Array[Byte]](topic, payload)
+      .withHeaders(headers.toSeq: _*)
+      .withRequestIdHeader()(requestId)
+    producer.send(record).transform(PublisherSuccess(_, requestId), PublisherException(_, requestId))
   }
 
   def shutDown(): Unit = {
