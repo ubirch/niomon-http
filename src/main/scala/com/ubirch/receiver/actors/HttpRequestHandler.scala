@@ -52,11 +52,12 @@ class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends
   }
 
   def receive: Receive = {
-    case RequestData(k, p, h) =>
-      log.debug(s"received input with requestId [$k]")
+    case RequestData(requestId, payload, h) =>
+      log.debug(s"received input with requestId [$requestId]")
       val selfPath = Serialization.serializedActorPath(self)
-      publisher.send(k, p, h + ("http-request-handler-actor" -> selfPath)) pipeTo self
+      publisher.send(requestId, payload, h + ("http-request-handler-actor" -> selfPath)) pipeTo self
       startMillis = System.currentTimeMillis()
+
     case response: ResponseData =>
       log.debug(s"received response with requestId [${response.requestId}]")
       requester ! response
@@ -67,6 +68,7 @@ class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends
       log.error(cause, s"publisher failed for requestId [$requestId]")
       requester ! f
       context.stop(self)
+
     case PublisherSuccess(_: RecordMetadata, requestId: String) =>
       log.debug(s"request with requestId [$requestId] published successfully")
   }
