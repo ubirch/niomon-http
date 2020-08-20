@@ -26,7 +26,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import akka.pattern.ask
+import akka.pattern.{AskTimeoutException, ask}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
@@ -69,8 +69,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         .in(extractFromRequest(req => req.uri))
         .in(binaryBody[Array[Byte]].description("Ubirch Protocol Packet to be anchored"))
         .in(docHeader(HeaderKeys.XUBIRCHHARDWAREID, "the hardware id of the sender device"))
-        .in(docHeader(HeaderKeys.XUBIRCHAUTHTYPE, "auth type",
-          Validator.enum(List("cumulocity", "ubirch", "keycloak").map(Some(_)) :+ None)))
+        .in(docHeader(HeaderKeys.XUBIRCHAUTHTYPE, "auth type", Validator.enum(List("cumulocity", "ubirch", "keycloak").map(Some(_)) :+ None)))
         .in(docHeader(HeaderKeys.XUBIRCHCREDENTIAL, "checked for ubirch auth"))
         .in(docHeader(HeaderKeys.AUTHORIZATION, cumulocityAuthDocs))
         .in(docHeader(HeaderKeys.XXSRFTOKEN, cumulocityAuthDocs))
@@ -97,10 +96,8 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         val requestId = UUID.randomUUID().toString
         val headers = getHeaders(h, authCookie, requestUri)
         log.debug(s"HTTP request: {} [{}]", v("requestId", requestId), v("headers", headers.asJava))
-        val responseData = dispatcher ? RequestData(requestId, input, headers)
-        responseData.transform {
-          case Success(res) =>
-            val result = res.asInstanceOf[ResponseData]
+        (dispatcher ? RequestData(requestId, input, headers)).transform {
+          case Success(result: ResponseData) =>
             // ToDo BjB 21.09.18 : Revise Headers
             val headers = result.headers
             val contentType = determineContentType(headers)
@@ -108,11 +105,25 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             responsesSent.labels(status.toString()).inc()
             timer.observeDuration()
             Success(Right((result.data, status.intValue(), contentType.toString())))
-          case Failure(e) =>
-            log.error("dispatcher failure", e)
+
+          case Success(_) =>
+            log.error("dispatcher failure -wrong response type-", v("requestId", requestId))
             responsesSent.labels(StatusCodes.InternalServerError.toString()).inc()
             timer.observeDuration()
-            Success(Left(e.getMessage))
+            Success(Left(s"The request[$requestId] was successfully processed but couldn't be fully completed as response"))
+
+          case Failure(e:AskTimeoutException) =>
+            log.error(s"dispatcher failure -timeout-: ${e.getMessage}", v("requestId", requestId))
+            responsesSent.labels(StatusCodes.InternalServerError.toString()).inc()
+            timer.observeDuration()
+            Success(Left(s"The request[$requestId] timed out. Try again."))
+
+          case Failure(e) =>
+            log.error(s"dispatcher failure: ${e.getMessage}", v("requestId", requestId))
+            responsesSent.labels(StatusCodes.InternalServerError.toString()).inc()
+            timer.observeDuration()
+            Success(Left(s"The request[$requestId] couldn't be successfully processed. Try again."))
+
         }
       } ~ get {
         path("status") {
