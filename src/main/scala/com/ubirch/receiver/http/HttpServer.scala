@@ -79,13 +79,12 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         .errorOut(stringBody.description("error details").and(statusCode(500)))
         .out(binaryBody[Array[Byte]].description("arbitrary response, configurable per device; status code may vary"))
         .out(statusCode)
-        .out(header[String](HeaderKeys.CONTENTTYPE).description("actual content type of the response (sadly this cannot be modelled accurately in swagger)"))
     }
 
     val route: Route = {
       import tapir.server.akkahttp._
       endpointDescription.toRoute { tup =>
-        // this is like this, because this is a 12-element tuple
+        // this is like this, because this is a 11-element tuple
         val h = tup._1
         val authCookie = tup._2
         val requestUri = tup._3
@@ -100,11 +99,10 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
           case Success(result: ResponseData) =>
             // ToDo BjB 21.09.18 : Revise Headers
             val headers = result.headers
-            val contentType = determineContentType(headers)
             val status = headers.get("http-status-code").map(_.toInt: StatusCode).getOrElse(StatusCodes.OK)
             responsesSent.labels(status.toString()).inc()
             timer.observeDuration()
-            Success(Right((result.data, status.intValue(), contentType.toString())))
+            Success(Right((result.data, status.intValue())))
 
           case Success(_) =>
             log.error("dispatcher failure -wrong response type-", v("requestId", requestId))
@@ -150,13 +148,6 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
     }
     // ToDo BjB 17.09.18 : Graceful shutdown
 
-  }
-
-  private def determineContentType(headers: Map[String, String]) = {
-    ContentType.parse(headers.getOrElse(`Content-Type`.name, "")) match {
-      case Left(_) => ContentTypes.`application/octet-stream`
-      case Right(x) => x
-    }
   }
 
   private val HEADERS_TO_PRESERVE = Array( // excludes Cookie header, because we only want one specific cookie
