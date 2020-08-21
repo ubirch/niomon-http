@@ -75,7 +75,6 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         .in(docHeader(HeaderKeys.XXSRFTOKEN, cumulocityAuthDocs))
         .in(docHeader(HeaderKeys.XCUMULOCITYBASEURL, "change which cumulocity instance is asked for auth"))
         .in(docHeader(HeaderKeys.XCUMULOCITYTENANT, "change which cumulocity tenant is asked for auth"))
-        .in(docHeader(HeaderKeys.XNIOMONPURGECACHES, "set this header to clean niomon caches (dangerous)"))
         .errorOut(stringBody.description("error details").and(statusCode(500)))
         .out(binaryBody[Array[Byte]].description("arbitrary response, configurable per device; status code may vary"))
         .out(statusCode)
@@ -84,7 +83,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
     val route: Route = {
       import tapir.server.akkahttp._
       endpointDescription.toRoute { tup =>
-        // this is like this, because this is a 11-element tuple
+        // this is like this, because this is a 10-element tuple
         val h = tup._1
         val authCookie = tup._2
         val requestUri = tup._3
@@ -156,7 +155,6 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
     HeaderKeys.XXSRFTOKEN,
     HeaderKeys.XCUMULOCITYBASEURL,
     HeaderKeys.XCUMULOCITYTENANT,
-    HeaderKeys.XNIOMONPURGECACHES,
     HeaderKeys.XUBIRCHCREDENTIAL,
     HeaderKeys.XUBIRCHHARDWAREID,
     HeaderKeys.XUBIRCHAUTHTYPE
@@ -168,9 +166,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
     } ++ authCookie.map(v => "Cookie" -> s"authorization=$v")
 
     val r = Map("Request-URI" -> requestUri.toString) ++ headersToPreserve
-    r.map { h =>
-      (h._1.toLowerCase -> h._2)
-    }
+    r.map { h => h._1.toLowerCase -> h._2 }
   }
 }
 
