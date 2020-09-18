@@ -78,12 +78,13 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         .errorOut(stringBody.description("error details").and(statusCode(500)))
         .out(binaryBody[Array[Byte]].description("arbitrary response, configurable per device; status code may vary"))
         .out(statusCode)
+        .out(header[Option[String]]("x-err").description("error code"))
     }
 
     val route: Route = {
       import tapir.server.akkahttp._
       endpointDescription.toRoute { tup =>
-        // this is like this, because this is a 10-element tuple
+        // this is like this, because this is a 11-element tuple
         val h = tup._1
         val authCookie = tup._2
         val requestUri = tup._3
@@ -99,9 +100,10 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             // ToDo BjB 21.09.18 : Revise Headers
             val headers = result.headers
             val status = headers.get("http-status-code").map(_.toInt: StatusCode).getOrElse(StatusCodes.OK)
+            val code = headers.get("x-err")
             responsesSent.labels(status.toString()).inc()
             timer.observeDuration()
-            Success(Right((result.data, status.intValue())))
+            Success(Right((result.data, status.intValue(), code)))
 
           case Success(_) =>
             log.error("dispatcher failure -wrong response type-", v("requestId", requestId))
