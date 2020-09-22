@@ -143,7 +143,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             </tr>
             <tr>
               <td>NF409-0000</td>
-              <td>Integrity Error: Known Hash</td>
+              <td>Integrity Error: Duplicate Hash</td>
               <td>Niomon Filter</td>
             </tr>
           </table>

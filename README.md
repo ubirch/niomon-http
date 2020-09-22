@@ -332,4 +332,4 @@ produced in the pipeline. The third and last element is a dash followed by a fou
 | NE400-1000 | Enriching Error: Missing header/param| Niomon Enricher|
 | NE400-2000 | Enriching Error: Error processing enrichment request| Niomon Enricher|
 | NE404-0000 | Enriching Error: Not found (Cumulocity)|Niomon Enricher|
-| NF409-0000 |Integrity Error: Known Hash| Niomon Filter|
+| NF409-0000 | Integrity Error: Duplicate Hash| Niomon Filter|
