@@ -61,9 +61,100 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
       val cumulocityAuthDocs = "checked for cumulocity auth (only one of {Authorization (header), " +
         "authorization (cookie), X-XSRF-TOKEN (header)} needed)"
 
+      val desc =
+        <div>
+          <p>Anchors the given Ubirch Protocol Packet (passed in as the body, I don't know why swagger ui doesn't show body's description)</p>
+          <p>
+            The following table represent the error codes. The error codes are composed of three parts. The first one is
+            the internal service component and it is the first two characters. The second element is the http code that might have been
+            produced in the pipeline. The third and last element is a dash followed by a four digit number.
+          </p>
+          <p>*NX*YYY*-ZZZZ*</p>
+          <table font-family="arial, sans-serif" border-collapse="collapse" width="100%">
+            <tr>
+              <th>Error Code</th>
+              <th>Meaning</th>
+              <th>Component</th>
+            </tr>
+            <tr>
+              <td>NA401-1000</td>
+              <td>Athentication Error: Missing header/param</td>
+              <td>Niomon Auth</td>
+            </tr>
+            <tr>
+              <td>NA401-2000</td>
+              <td>Athentication Error: Error processing authentication response/Failed Request</td>
+              <td>Niomon Auth</td>
+            </tr>
+            <tr>
+              <td>NA401-3000</td>
+              <td>Athentication Error (cummolicity): Error processing authentication request</td>
+              <td>Niomon Auth</td>
+            </tr>
+            <tr>
+              <td>NA401-4000</td>
+              <td>Athentication Error: Failed Request</td>
+              <td>Niomon Auth</td>
+            </tr>
+            <tr>
+              <td>ND403-1100</td>
+              <td>Invalid Verification: Missing header/param</td>
+              <td>Niomon Decoder - verification -</td>
+            </tr>
+            <tr>
+              <td>ND403-1200</td>
+              <td>Invalid Verification: Invalid Parts</td>
+              <td>Niomon Decoder - verification -</td>
+            </tr>
+            <tr>
+              <td>ND403-1300</td>
+              <td>Invalid Verification</td>
+              <td>Niomon Decoder - verification -</td>
+            </tr>
+            <tr>
+              <td>ND400-2100</td>
+              <td>Decoding Error: Missing header/param</td>
+              <td>Niomon Decoder - decoding - </td>
+            </tr>
+            <tr>
+              <td>ND403-2200</td>
+              <td>Decoding Error: Invalid Match</td>
+              <td>Niomon Decoder - decoding - </td>
+            </tr>
+            <tr>
+              <td>ND400-2300</td>
+              <td>Decoding Error: Decoding Error/Null Payload</td>
+              <td>Niomon Decoder - decoding - </td>
+            </tr>
+            <tr>
+              <td>NE400-1000</td>
+              <td>Enriching Error: Missing header/param</td>
+              <td>Niomon Enricher</td>
+            </tr>
+            <tr>
+              <td>NE400-2000</td>
+              <td>Enriching Error: Error processing enrichment request</td>
+              <td>Niomon Enricher</td>
+            </tr>
+            <tr>
+              <td>NE404-0000</td>
+              <td>Enriching Error: Not found (cummolicity)</td>
+              <td>Niomon Enricher</td>
+            </tr>
+            <tr>
+              <td>NF409-0000</td>
+              <td>Integrity Error: Known Hash</td>
+              <td>Niomon Filter</td>
+            </tr>
+          </table>
+        </div>
+
       endpoint
         .post
-        .description("Anchors the given Ubirch Protocol Packet (passed in as the body, I don't know why swagger ui doesn't show body's description)")
+        .name("Receives Ubirch Protocol Packets")
+        .summary("Receives Ubirch Protocol Packets")
+        .tag("Ubirch Protocol Packet")
+        .description(desc.toString())
         .in(headers.description("some headers are propagated further into niomon system... TODO: explain which exactly"))
         .in(cookie[Option[String]]("authorization").description(cumulocityAuthDocs))
         .in(extractFromRequest(req => req.uri))
@@ -100,7 +191,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             // ToDo BjB 21.09.18 : Revise Headers
             val headers = result.headers
             val status = headers.get("http-status-code").map(_.toInt: StatusCode).getOrElse(StatusCodes.OK)
-            val code = headers.get("x-err")
+            val code = headers.filterNot(_ => status == StatusCodes.OK).get("x-err")
             responsesSent.labels(status.toString()).inc()
             timer.observeDuration()
             Success(Right((result.data, status.intValue(), code)))
@@ -132,7 +223,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             import tapir.docs.openapi._
             import tapir.openapi.circe.yaml._
             respondWithHeaders(`Content-Type`(MediaType.applicationWithFixedCharset("x-yaml", HttpCharsets.`UTF-8`)), `Access-Control-Allow-Origin` *)(
-              complete(endpointDescription.toOpenAPI("Niomon HTTP", "1.0.1-SNAPSHOT").toYaml)
+              complete(endpointDescription.toOpenAPI("Niomon HTTP", "1.0.2-SNAPSHOT").toYaml)
             )
           } ~ getFromResourceDirectory("swagger") ~ redirectToTrailingSlashIfMissing(StatusCodes.MovedPermanently) {
             pathSingleSlash {
