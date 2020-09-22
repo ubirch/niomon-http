@@ -88,7 +88,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             </tr>
             <tr>
               <td>NA401-3000</td>
-              <td>Athentication Error (cummolicity): Error processing authentication request</td>
+              <td>Athentication Error (Cumulocity): Error processing authentication request</td>
               <td>Niomon Auth</td>
             </tr>
             <tr>
@@ -138,7 +138,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             </tr>
             <tr>
               <td>NE404-0000</td>
-              <td>Enriching Error: Not found (cummolicity)</td>
+              <td>Enriching Error: Not found (Cumulocity)</td>
               <td>Niomon Enricher</td>
             </tr>
             <tr>
