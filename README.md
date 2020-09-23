@@ -1,6 +1,4 @@
-# WIP
-
-# niomon-http
+# Niomon Http
 
 #### Overview
 
@@ -120,10 +118,6 @@ Two sample requests against the two nodes can look like this:
  $
 
 ```
-
-## Deployment in kubernetes
-
-**TBD**
 
 ## Akka cluster monitoring
 
@@ -308,3 +302,35 @@ Additionally, the actor is subscribed to a set of cluster events, namely: Leader
 time the current node detects such a change in the cluster, it logs this occurrence.
 
 ![Cluster Monitoring](https://raw.githubusercontent.com/ubirch/niomon-http/master/grafana_example.png "Cluster Monitoring")
+
+## Error Codes
+ 
+The following table represent the error codes. The error codes are composed of three parts. The first one is
+the internal service component and it is the first two characters (NX). The second element is the http code that might have been (YYY)
+produced in the pipeline. The third and last element is a dash followed by a four digit number (-ZZZZ).
+
+The name of the header is This error **X-Err** 
+
+```
++===========+===========+=======+
+| COMPONENT | HTTP CODE | CODE  |
+| NX        | YYY       | -ZZZZ | 
++===========+===========+=======+
+```
+
+| Error Code |  Meaning | Component |
+| ---------- | ------- | --------- |
+| NA401-1000 | Athentication Error: Missing header/param | Niomon Auth | 
+| NA401-2000 | Athentication Error: Error processing authentication response/Failed Request| Niomon Auth|
+| NA401-3000 | Athentication Error (Cumulocity): Error processing authentication request|Niomon Auth|
+| NA401-4000 | Athentication Error: Failed Request|Niomon Auth|
+| ND403-1100 | Invalid Verification: Missing header/param| Niomon Decoder - verification -|
+| ND403-1200 | Invalid Verification: Invalid Parts|Niomon Decoder - verification -|
+| ND403-1300 | Invalid Verification|Niomon Decoder - verification -|
+| ND400-2100 | Decoding Error: Missing header/param| Niomon Decoder - decoding - |
+| ND403-2200 | Decoding Error: Invalid Match| Niomon Decoder - decoding - |
+| ND400-2300 | Decoding Error: Decoding Error/Null Payload| Niomon Decoder - decoding - |
+| NE400-1000 | Enriching Error: Missing header/param| Niomon Enricher|
+| NE400-2000 | Enriching Error: Error processing enrichment request| Niomon Enricher|
+| NE404-0000 | Enriching Error: Not found (Cumulocity)|Niomon Enricher|
+| NF409-0000 | Integrity Error: Duplicate Hash| Niomon Filter|
