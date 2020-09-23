@@ -309,6 +309,8 @@ The following table represent the error codes. The error codes are composed of t
 the internal service component and it is the first two characters (NX). The second element is the http code that might have been (YYY)
 produced in the pipeline. The third and last element is a dash followed by a four digit number (-ZZZZ).
 
+The name of the header is This error **X-Err** 
+
 ```
 +===========+===========+=======+
 | COMPONENT | HTTP CODE | CODE  |
@@ -319,7 +321,6 @@ produced in the pipeline. The third and last element is a dash followed by a fou
 | Error Code |  Meaning | Component |
 | ---------- | ------- | --------- |
 | NA401-1000 | Athentication Error: Missing header/param | Niomon Auth | 
-| NA401-1000 | Athentication Error: Missing header/param| Niomon Auth|
 | NA401-2000 | Athentication Error: Error processing authentication response/Failed Request| Niomon Auth|
 | NA401-3000 | Athentication Error (Cumulocity): Error processing authentication request|Niomon Auth|
 | NA401-4000 | Athentication Error: Failed Request|Niomon Auth|

@@ -70,6 +70,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             produced in the pipeline. The third and last element is a dash followed by a four digit number.
           </p>
           <p>*NX*YYY*-ZZZZ*</p>
+          <p>The name of the header is This error X-Err</p>
           <table font-family="arial, sans-serif" border-collapse="collapse" width="100%">
             <tr>
               <th>Error Code</th>
