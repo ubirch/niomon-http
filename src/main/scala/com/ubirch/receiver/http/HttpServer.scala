@@ -129,7 +129,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             </tr>
             <tr>
               <td>NE400-1000</td>
-              <td>Enriching Error: Missing header/param</td>
+              <td>Enriching Error: Missing header/param/body</td>
               <td>Niomon Enricher</td>
             </tr>
             <tr>
