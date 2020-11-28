@@ -24,9 +24,7 @@ import akka.event.Logging
 import akka.event.Logging.MDC
 import akka.pattern.pipe
 import akka.serialization.Serialization
-import com.ubirch.receiver.http.HttpServer.processingTimer
 import com.ubirch.receiver.kafka.{KafkaPublisher, PublisherException, PublisherSuccess}
-import io.prometheus.client.Summary
 import org.apache.kafka.clients.producer.RecordMetadata
 
 /**
@@ -37,8 +35,7 @@ import org.apache.kafka.clients.producer.RecordMetadata
 class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends Actor with DiagnosticActorLogging {
   import context.dispatcher
 
-  private var startMillis = 0L
-  private var timer: Summary.Timer = _
+  var startMillis = 0L
 
   override def mdc(currentMessage: Any): MDC = currentMessage match {
     case r: RequestData => Map("requestId" -> r.requestId) ++
@@ -59,7 +56,6 @@ class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends
       log.debug(s"received input with requestId [$requestId]")
       val selfPath = Serialization.serializedActorPath(self)
       publisher.send(requestId, payload, h + ("http-request-handler-actor" -> selfPath)) pipeTo self
-      timer = processingTimer.labels("akka").startTimer()
       startMillis = System.currentTimeMillis()
 
     case response: ResponseData =>
@@ -78,7 +74,6 @@ class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends
   }
 
   private def logRequestResponseTime(response: ResponseData): Unit = {
-    timer.observeDuration()
     val time = System.currentTimeMillis() - startMillis
     log.debug(s"took $time ms to respond to [${response.requestId}]")
     if (time > 500 && time < 10000) {

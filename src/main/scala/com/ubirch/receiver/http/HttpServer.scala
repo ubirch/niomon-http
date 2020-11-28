@@ -183,7 +183,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         val input = tup._4
 
         requestReceived.inc()
-        val timer = processingTimer.labels("http").startTimer()
+        val timer = processingTimer.startTimer()
         val requestId = UUID.randomUUID().toString
         val headers = getHeaders(h, authCookie, requestUri)
         log.debug(s"HTTP request: {} [{}]", v("requestId", requestId), v("headers", headers.asJava))
@@ -276,7 +276,6 @@ object HttpServer {
 
   val processingTimer: Summary = Summary
     .build("processing_time_seconds", "Message processing time in seconds")
-    .labelNames("component")
     .quantile(0.9, 0.05)
     .quantile(0.95, 0.05)
     .quantile(0.99, 0.05)
