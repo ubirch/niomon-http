@@ -23,6 +23,7 @@ import com.ubirch.receiver.kafka.{KafkaPublisher, PublisherException, PublisherS
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
+import com.google.protobuf.ByteString
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
 
 import scala.concurrent.Future
@@ -54,7 +55,7 @@ class HttpRequestHandlerTest extends FlatSpec with MockitoSugar with ArgumentMat
     //given
     val returnTo = TestProbe()
     val requestHandler = system.actorOf(Props(classOf[HttpRequestHandler], returnTo.ref, mock[KafkaPublisher]))
-    val responseData = ResponseData("requestId", Map(), "value".getBytes)
+    val responseData = ResponseData("requestId", Map(), ByteString.copyFrom("Hola".getBytes()))
 
     // when
     requestHandler ! responseData

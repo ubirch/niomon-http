@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import akka.actor.ActorRef
 import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.KafkaConsumer.Conf
+import com.google.protobuf.ByteString
 import com.typesafe.scalalogging.Logger
 import com.ubirch.kafka._
 import com.ubirch.niomon.healthcheck.{Checks, HealthCheckServer}
@@ -68,7 +69,7 @@ class KafkaListener(kafkaUrl: String, topics: Seq[String], dispatcher: ActorRef,
 
   private def deliver(rcds: ConsumerRecords[String, Array[Byte]]): Unit = {
     rcds.iterator().forEachRemaining { record =>
-      dispatcher ! ResponseData(record.requestIdHeader().orNull, record.headersScala, record.value())
+      dispatcher ! ResponseData(record.requestIdHeader().orNull, record.headersScala, ByteString.copyFrom(record.value()))
     }
   }
 

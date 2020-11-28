@@ -19,6 +19,7 @@ package com.ubirch.receiver.actors
 import akka.actor.{ActorSystem, Props}
 import akka.serialization.Serialization
 import akka.testkit.TestProbe
+import com.google.protobuf.ByteString
 import com.ubirch.receiver.kafka.KafkaPublisher
 import org.mockito.{ArgumentMatchersSugar, MockitoSugar}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec, Matchers}
@@ -49,7 +50,7 @@ class DispatcherTest extends FlatSpec with MockitoSugar with ArgumentMatchersSug
     //given
     val handler = TestProbe()
     val dispatcher = system.actorOf(Props(classOf[Dispatcher], requestHandlerCreator(mock[KafkaPublisher])))
-    val responseData = ResponseData("someId", Map("http-request-handler-actor" -> Serialization.serializedActorPath(handler.ref)), "value".getBytes)
+    val responseData = ResponseData("someId", Map("http-request-handler-actor" -> Serialization.serializedActorPath(handler.ref)), ByteString.copyFrom("value".getBytes()))
 
     // when
     dispatcher ! responseData
