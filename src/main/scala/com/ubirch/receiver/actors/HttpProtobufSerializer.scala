@@ -11,17 +11,12 @@ class HttpProtobufSerializer extends SerializerWithStringManifest{
 
 
   override def fromBinary(bytes: Array[Byte], manifest: String): AnyRef = {
-
-    println("inside fromBinary"+manifest)
-
     manifest match {
       case ResponseDataManifest => ResponseData.parseFrom(bytes)
     }
   }
 
   override def toBinary(o: AnyRef): Array[Byte] = {
-
-    println("inside toBinary ")
     o match {
       case a: ResponseData => a.toByteArray
     }
