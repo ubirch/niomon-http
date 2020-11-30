@@ -87,5 +87,3 @@ class HttpRequestHandler(requester: ActorRef, publisher: KafkaPublisher) extends
 }
 
 final case class RequestData(requestId: String, payload: Array[Byte], headers: Map[String, String])
-
-final case class ResponseData(requestId: String, headers: Map[String, String], data: Array[Byte])

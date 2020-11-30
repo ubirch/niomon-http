@@ -195,7 +195,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             val code = headers.filterNot(_ => status == StatusCodes.OK).get("x-err")
             responsesSent.labels(status.toString()).inc()
             timer.observeDuration()
-            Success(Right((result.data, status.intValue(), code)))
+            Success(Right((result.data.toByteArray, status.intValue(), code)))
 
           case Success(_) =>
             log.error("dispatcher failure -wrong response type-", v("requestId", requestId))

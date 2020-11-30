@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package com.ubirch.receiver;
+
+message ResponseData {
+  string requestId = 1;
+  map<string, string> headers = 2;
+  bytes data = 3;
+}
