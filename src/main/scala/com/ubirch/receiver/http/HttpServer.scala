@@ -79,22 +79,22 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             </tr>
             <tr>
               <td>NA401-1000</td>
-              <td>Athentication Error: Missing header/param</td>
+              <td>Authentication Error: Missing header/param</td>
               <td>Niomon Auth</td>
             </tr>
             <tr>
               <td>NA401-2000</td>
-              <td>Athentication Error: Error processing authentication response/Failed Request</td>
+              <td>Authentication Error: Error processing authentication response/Failed Request</td>
               <td>Niomon Auth</td>
             </tr>
             <tr>
               <td>NA401-3000</td>
-              <td>Athentication Error (Cumulocity): Error processing authentication request</td>
+              <td>Authentication Error (Cumulocity): Error processing authentication request</td>
               <td>Niomon Auth</td>
             </tr>
             <tr>
               <td>NA401-4000</td>
-              <td>Athentication Error: Failed Request</td>
+              <td>Authentication Error: Failed Request</td>
               <td>Niomon Auth</td>
             </tr>
             <tr>

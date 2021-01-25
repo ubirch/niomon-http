@@ -320,10 +320,10 @@ The name of the header is This error **X-Err**
 
 | Error Code |  Meaning | Component |
 | ---------- | ------- | --------- |
-| NA401-1000 | Athentication Error: Missing header/param | Niomon Auth | 
-| NA401-2000 | Athentication Error: Error processing authentication response/Failed Request| Niomon Auth|
-| NA401-3000 | Athentication Error (Cumulocity): Error processing authentication request|Niomon Auth|
-| NA401-4000 | Athentication Error: Failed Request|Niomon Auth|
+| NA401-1000 | Authentication Error: Missing header/param | Niomon Auth | 
+| NA401-2000 | Authentication Error: Error processing authentication response/Failed Request| Niomon Auth|
+| NA401-3000 | Authentication Error (Cumulocity): Error processing authentication request|Niomon Auth|
+| NA401-4000 | Authentication Error: Failed Request|Niomon Auth|
 | ND403-1100 | Invalid Verification: Missing header/param| Niomon Decoder - verification -|
 | ND403-1200 | Invalid Verification: Invalid Parts|Niomon Decoder - verification -|
 | ND403-1300 | Invalid Verification|Niomon Decoder - verification -|
