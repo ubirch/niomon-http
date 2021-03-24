@@ -16,10 +16,6 @@
 
 package com.ubirch.receiver.http
 
-import java.net.URI
-import java.util.UUID
-import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -36,6 +32,9 @@ import com.ubirch.receiver.http.HttpServer._
 import io.prometheus.client.{Counter, Summary}
 import net.logstash.logback.argument.StructuredArguments.v
 
+import java.net.URI
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
@@ -145,6 +144,21 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
             <tr>
               <td>NF409-0000</td>
               <td>Integrity Error: Duplicate Hash</td>
+              <td>Niomon Filter</td>
+            </tr>
+            <tr>
+              <td>NF409-0010</td>
+              <td>Integrity Error: Disable already disabled or non-existing hash</td>
+              <td>Niomon Filter</td>
+            </tr>
+            <tr>
+              <td>NF409-0020</td>
+              <td>Integrity Error: Enable already enabled or non-existing hash</td>
+              <td>Niomon Filter</td>
+            </tr>
+            <tr>
+              <td>NF409-0030</td>
+              <td>Integrity Error: Delete non-existing hash</td>
               <td>Niomon Filter</td>
             </tr>
           </table>
