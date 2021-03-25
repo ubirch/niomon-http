@@ -334,3 +334,7 @@ The name of the header is This error **X-Err**
 | NE400-2000 | Enriching Error: Error processing enrichment request| Niomon Enricher|
 | NE404-0000 | Enriching Error: Not found (Cumulocity)|Niomon Enricher|
 | NF409-0000 | Integrity Error: Duplicate Hash| Niomon Filter|
+| NF409-0010 | Integrity Error: Disable already disabled or non-existing hash| Niomon Filter|
+| NF409-0020 | Integrity Error: Enable already enabled or non-existing hash| Niomon Filter|
+| NF409-0030 | Integrity Error: Delete non-existing hash| Niomon Filter|
+
