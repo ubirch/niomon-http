@@ -175,7 +175,7 @@ class HttpServer(port: Int, dispatcher: ActorRef)(implicit val system: ActorSyst
         .in(extractFromRequest(req => req.uri))
         .in(binaryBody[Array[Byte]].description("Ubirch Protocol Packet to be anchored"))
         .in(docHeader(HeaderKeys.XUBIRCHHARDWAREID, "the hardware id of the sender device"))
-        .in(docHeader(HeaderKeys.XUBIRCHAUTHTYPE, "auth type", Validator.enum(List("cumulocity", "ubirch", "keycloak").map(Some(_)) :+ None)))
+        .in(docHeader(HeaderKeys.XUBIRCHAUTHTYPE, "auth type", Validator.enum(List("cumulocity", "ubirch", "ubirch-token", "keycloak").map(Some(_)) :+ None)))
         .in(docHeader(HeaderKeys.XUBIRCHCREDENTIAL, "checked for ubirch auth"))
         .in(docHeader(HeaderKeys.AUTHORIZATION, cumulocityAuthDocs))
         .in(docHeader(HeaderKeys.XXSRFTOKEN, cumulocityAuthDocs))
