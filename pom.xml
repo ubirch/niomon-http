@@ -56,6 +56,12 @@
             <organization>ubirch GmbH</organization>
             <organizationUrl>https://ubirch.com/</organizationUrl>
         </developer>
+        <developer>
+            <name>Carlos Sanchez</name>
+            <email>carlos.sanchezi@ubirch.com</email>
+            <organization>ubirch GmbH</organization>
+            <organizationUrl>https://ubirch.com/</organizationUrl>
+        </developer>
     </developers>
 
     <scm>
@@ -157,12 +163,7 @@
             <version>0.11.1</version>
         </dependency>
 
-        <!-- kafka -->
-        <dependency>
-            <groupId>net.cakesolutions</groupId>
-            <artifactId>scala-kafka-client_${scala.major.version}</artifactId>
-            <version>${simple.kafka.client.version}</version>
-        </dependency>
+
 
         <!-- health check -->
         <dependency>
@@ -262,12 +263,6 @@
     </build>
 
     <repositories>
-        <!-- simple kafka client -->
-        <repository>
-            <id>bintray-cakesolutions-maven</id>
-            <name>bintray</name>
-            <url>http://dl.bintray.com/cakesolutions/maven</url>
-        </repository>
         <repository>
             <id>snapshots-repo</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
