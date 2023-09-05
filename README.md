@@ -37,7 +37,7 @@ The cluster uses kubernetes for autodiscovery of its members.
 topic) can be handled transparently to the niomon-http.
 * There is no need to implement a custom `org.apache.kafka.clients.producer.Partitioner` for the
 kafka producer or a `partition.assignment.strategy` for the kafka consumer. 
-* for best scaling the number of partitions for the incoming and the outcoming topic should be equal or a multiple
+* for best scaling the number of partitions for the incoming and the outgoing topic should be equal or a multiple
 of the deployed instances (nodes) of the niomon-http.
 
 #### Frameworks and Dependencies
@@ -306,8 +306,8 @@ time the current node detects such a change in the cluster, it logs this occurre
 ## Error Codes
  
 The following table represent the error codes. The error codes are composed of three parts. The first one is
-the internal service component and it is the first two characters (NX). The second element is the http code that might have been (YYY)
-produced in the pipeline. The third and last element is a dash followed by a four digit number (-ZZZZ).
+the internal service component, and it is the first two characters (NX). The second element is the http code that might have been (YYY)
+produced in the pipeline. The third and last element is a dash followed by a four-digit number (-ZZZZ).
 
 The name of the header is This error **X-Err** 
 

@@ -1,12 +1,12 @@
 package com.ubirch.receiver.conf
 
 object HeaderKeys {
-  val XUBIRCHCREDENTIAL = "X-Ubirch-Credential".toLowerCase
-  val XUBIRCHHARDWAREID = "X-Ubirch-Hardware-Id".toLowerCase
-  val XUBIRCHAUTHTYPE = "X-Ubirch-Auth-Type".toLowerCase
-  val AUTHORIZATION = "Authorization".toLowerCase
-  val XXSRFTOKEN = "X-XSRF-TOKEN".toLowerCase
-  val XCUMULOCITYBASEURL = "X-Cumulocity-BaseUrl".toLowerCase
-  val XCUMULOCITYTENANT = "X-Cumulocity-Tenant".toLowerCase
-  val CONTENTTYPE = "Content-Type".toLowerCase
+  final val XUBIRCHCREDENTIAL = "X-Ubirch-Credential".toLowerCase
+  final val XUBIRCHHARDWAREID = "X-Ubirch-Hardware-Id".toLowerCase
+  final val XUBIRCHAUTHTYPE = "X-Ubirch-Auth-Type".toLowerCase
+  final val AUTHORIZATION = "Authorization".toLowerCase
+  final val XXSRFTOKEN = "X-XSRF-TOKEN".toLowerCase
+  final val XCUMULOCITYBASEURL = "X-Cumulocity-BaseUrl".toLowerCase
+  final val XCUMULOCITYTENANT = "X-Cumulocity-Tenant".toLowerCase
+  final val CONTENTTYPE = "Content-Type".toLowerCase
 }
