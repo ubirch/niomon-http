@@ -7,6 +7,8 @@ There are two types of authentication types that can be used to anchor through N
 
 > When using a JWT, the auth type must be `ubirch-token`
 
+> When using a Password, the auth type must be `ubirch`
+
 ```bash
 AUTH_TYPE=ubirch or ubirch-token
 HARDWARE_ID=Device Id from console
